@@ -12,7 +12,7 @@ Batch_Info,batch_id,VARCHAR(20),YES,,YES,YES,,Unique batch identifier
 Batch_Info,vendor_id,VARCHAR(20),NO,Vendor(vendor_id),NO,YES,,References Vendor table
 Batch_Info,batch_size,INT,NO,,NO,YES,,Size of the batch
 Batch_Info,date_of_production,DATE,NO,,NO,NO,,Production date
-Batch_Info,qc_status,VARCHAR(20),NO,,NO,NO,"IN ('Pass','Fail','Due Inspection')",Quality control status
+Batch_Info,qc_status,VARCHAR(20),NO,,NO,NO,"IN ('Pass','Fail','Pending Inspection')",Quality control status
 Batch_Info,expiry_date,DATE,NO,,NO,NO,,Expiry date
 Batch_Info,last_inspection_date,DATE,NO,,NO,NO,,Last inspection date
 Batch_Info,fitment_date,DATE,NO,,NO,NO,,Date of fitment
