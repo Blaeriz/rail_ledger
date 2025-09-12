@@ -1,0 +1,25 @@
+Table Name,Column Name,Data Type,Primary Key,Foreign Key,Unique,Not Null,Check Condition,Description
+Vendor,vendor_id,VARCHAR(20),YES,,YES,YES,,Unique vendor identifier
+Vendor,no_of_batches,INT,NO,,NO,YES,,Number of batches supplied
+Vendor,gst_no,VARCHAR(15),NO,,NO,NO,,Goods and Services Tax ID
+Vendor,pan_number,VARCHAR(10),NO,,NO,NO,,Permanent Account Number
+Vendor,city,VARCHAR(50),NO,,NO,NO,,City of vendor
+Vendor,state,VARCHAR(50),NO,,NO,NO,,State of vendor
+Vendor,phone_number,VARCHAR(15),NO,,NO,NO,,Contact phone number
+Vendor,email,VARCHAR(100),NO,,NO,NO,,Contact email
+Vendor,audit_date,DATE,NO,,NO,NO,,Date of last audit
+Batch_Info,batch_id,VARCHAR(20),YES,,YES,YES,,Unique batch identifier
+Batch_Info,vendor_id,VARCHAR(20),NO,Vendor(vendor_id),NO,YES,,References Vendor table
+Batch_Info,batch_size,INT,NO,,NO,YES,,Size of the batch
+Batch_Info,date_of_production,DATE,NO,,NO,NO,,Production date
+Batch_Info,qc_status,VARCHAR(20),NO,,NO,NO,"IN ('Pass','Fail','Pending Inspection')",Quality control status
+Batch_Info,expiry_date,DATE,NO,,NO,NO,,Expiry date
+Batch_Info,last_inspection_date,DATE,NO,,NO,NO,,Last inspection date
+Batch_Info,fitment_date,DATE,NO,,NO,NO,,Date of fitment
+Batch_Info,fitment_location,VARCHAR(200),NO,,NO,NO,,Location where batch was fitted
+Batch_Info,qr_hash,VARCHAR(255),NO,,YES,NO,,Unique QR code hash
+User_Info,user_id,VARCHAR(36),YES,,YES,YES,,Unique user identifier (UUID)
+User_Info,aadhar,VARCHAR(12),NO,,YES,YES,,Aadhaar number (unique user identifier)
+User_Info,phone_number,VARCHAR(15),NO,,YES,NO,,User’s phone number (used for login/OTP)
+User_Info,name,VARCHAR(100),NO,,NO,NO,,Full name of user
+User_Info,user_role,VARCHAR(100),NO,,NO,NO,"IN ('Admin','Viewer','Inspector')",(Admin/Viewer/Inspector)
