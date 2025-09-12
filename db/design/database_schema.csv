@@ -22,4 +22,4 @@ User_Info,user_id,VARCHAR(36),YES,,YES,YES,,Unique user identifier (UUID)
 User_Info,aadhar,VARCHAR(12),NO,,YES,YES,,Aadhaar number (unique user identifier)
 User_Info,phone_number,VARCHAR(15),NO,,YES,NO,,User’s phone number (used for login/OTP)
 User_Info,name,VARCHAR(100),NO,,NO,NO,,Full name of user
-User_Info,user_role,VARCHAR(100),NO,,NO,NO,,(Admin/Viewer/Inspector)
+User_Info,user_role,VARCHAR(100),NO,,NO,NO,"IN ('Admin','Viewer','Inspector')",(Admin/Viewer/Inspector)
