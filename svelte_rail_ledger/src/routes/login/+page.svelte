@@ -59,7 +59,7 @@
     <div class="header">
       <div class="logo">
         <span class="logo-icon">🚆</span>
-        <h1>Rail_Ledger</h1>
+        <h1>Rail Ledger</h1>
       </div>
       <p class="subtitle">Digital Track Fittings Management for Indian Railways</p>
     </div>
@@ -155,7 +155,7 @@
   }
 
   .logo h1 {
-    color: #1e3a8a;
+    color: #000000;
     margin: 0;
     font-size: 2rem;
     font-weight: bold;

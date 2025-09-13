@@ -1,6 +1,7 @@
 <script>
   import Layout from '$lib/components/Layout.svelte';
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
 
   let userRole = '';
   let username = '';
@@ -67,6 +68,12 @@
       userRole = storedRole;
       username = storedUsername;
     }
+
+    // Check if we should auto-open the form
+    const urlParams = new URLSearchParams($page.url.search);
+    if (urlParams.get('action') === 'add') {
+      showAddForm = true;
+    }
   });
 
   function toggleAddForm() {
@@ -130,8 +137,8 @@
         <h2>Add New Batch</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label>Vendor</label>
-            <select bind:value={newBatch.vendor_id}>
+            <label for="batch-vendor">Vendor</label>
+            <select id="batch-vendor" bind:value={newBatch.vendor_id}>
               <option value="">Select Vendor</option>
               {#each vendors as vendor}
                 <option value={vendor.vendor_id}>{vendor.name}</option>
@@ -139,24 +146,24 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Batch Size</label>
-            <input type="number" bind:value={newBatch.batch_size} placeholder="Enter batch size" />
+            <label for="batch-size">Batch Size</label>
+            <input id="batch-size" type="number" bind:value={newBatch.batch_size} placeholder="Enter batch size" />
           </div>
           <div class="form-group">
-            <label>Production Date</label>
-            <input type="date" bind:value={newBatch.production_date} />
+            <label for="production-date">Production Date</label>
+            <input id="production-date" type="date" bind:value={newBatch.production_date} />
           </div>
           <div class="form-group">
-            <label>QC Status</label>
-            <select bind:value={newBatch.qc_status}>
+            <label for="qc-status">QC Status</label>
+            <select id="qc-status" bind:value={newBatch.qc_status}>
               <option value="Pending Inspection">Pending Inspection</option>
               <option value="Pass">Pass</option>
               <option value="Fail">Fail</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Expiry Date</label>
-            <input type="date" bind:value={newBatch.expiry_date} />
+            <label for="expiry-date">Expiry Date</label>
+            <input id="expiry-date" type="date" bind:value={newBatch.expiry_date} />
           </div>
         </div>
         <div class="form-actions">
@@ -233,7 +240,7 @@
   }
 
   .page-header h1 {
-    color: #1e293b;
+    color: #000000;
     margin: 0;
     font-size: 1.75rem;
     font-weight: 700;
@@ -267,7 +274,7 @@
   }
 
   .add-form h2 {
-    color: #1e293b;
+    color: #000000;
     margin: 0 0 1.5rem 0;
     font-size: 1.5rem;
   }
@@ -344,7 +351,7 @@
   }
 
   .table-header h2 {
-    color: #1e293b;
+    color: #000000;
     margin: 0;
     font-size: 1.25rem;
   }

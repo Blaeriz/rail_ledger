@@ -57,30 +57,30 @@
         <h2>Add Inspection</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label>Batch ID</label>
-            <input type="text" bind:value={newInspection.batch_id} />
+            <label for="inspection-batch-id">Batch ID</label>
+            <input id="inspection-batch-id" type="text" bind:value={newInspection.batch_id} />
           </div>
           <div class="form-group">
-            <label>Inspection Date</label>
-            <input type="date" bind:value={newInspection.inspection_date} />
+            <label for="inspection-date">Inspection Date</label>
+            <input id="inspection-date" type="date" bind:value={newInspection.inspection_date} />
           </div>
           <div class="form-group">
-            <label>Type</label>
-            <select bind:value={newInspection.type}>
+            <label for="inspection-type">Type</label>
+            <select id="inspection-type" bind:value={newInspection.type}>
               <option value="Quality Check">Quality Check</option>
               <option value="Safety Check">Safety Check</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Status</label>
-            <select bind:value={newInspection.status}>
+            <label for="inspection-status">Status</label>
+            <select id="inspection-status" bind:value={newInspection.status}>
               <option value="Pass">Pass</option>
               <option value="Fail">Fail</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Remarks</label>
-            <textarea bind:value={newInspection.remarks}></textarea>
+            <label for="inspection-remarks">Remarks</label>
+            <textarea id="inspection-remarks" bind:value={newInspection.remarks}></textarea>
           </div>
         </div>
         <button class="save-btn" on:click={addInspection}>Save</button>
@@ -131,7 +131,7 @@
   }
 
   .inspections-page h1 {
-    color: #1e293b;
+    color: #000000;
     margin-bottom: 2rem;
     font-size: 1.75rem;
     font-weight: 700;

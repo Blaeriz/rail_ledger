@@ -45,7 +45,7 @@
     </button>
     <a href={getDashboardPath()} class="logo">
       <span class="logo-icon">🚆</span>
-      <span class="logo-text">Rail_Ledger</span>
+      <span class="logo-text">Rail Ledger</span>
     </a>
   </div>
   

@@ -56,20 +56,20 @@
         <h2>Add Fitment</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label>Batch ID</label>
-            <input type="text" bind:value={newFitment.batch_id} />
+            <label for="fitment-batch-id">Batch ID</label>
+            <input id="fitment-batch-id" type="text" bind:value={newFitment.batch_id} />
           </div>
           <div class="form-group">
-            <label>Fitment Date</label>
-            <input type="date" bind:value={newFitment.fitment_date} />
+            <label for="fitment-date">Fitment Date</label>
+            <input id="fitment-date" type="date" bind:value={newFitment.fitment_date} />
           </div>
           <div class="form-group">
-            <label>Location</label>
-            <input type="text" bind:value={newFitment.location} />
+            <label for="fitment-location">Location</label>
+            <input id="fitment-location" type="text" bind:value={newFitment.location} />
           </div>
           <div class="form-group">
-            <label>Upload Photo</label>
-            <input type="file" accept="image/*" />
+            <label for="fitment-photo">Upload Photo</label>
+            <input id="fitment-photo" type="file" accept="image/*" />
           </div>
         </div>
         <button class="save-btn" on:click={addFitment}>Save</button>
@@ -114,7 +114,7 @@
   }
 
   .fitments-page h1 {
-    color: #1e293b;
+    color: #000000;
     margin-bottom: 2rem;
     font-size: 1.75rem;
     font-weight: 700;

@@ -58,7 +58,7 @@
   }
 
   .profile-page h1 {
-    color: #1e293b;
+    color: #000000;
     margin-bottom: 2rem;
     font-size: 1.75rem;
     font-weight: 700;
@@ -76,7 +76,7 @@
   }
 
   .profile-card h2 {
-    color: #1e293b;
+    color: #000000;
     margin: 0 0 1.5rem 0;
     font-size: 1.5rem;
   }
