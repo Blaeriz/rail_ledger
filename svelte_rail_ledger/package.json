@@ -27,6 +27,7 @@
 		"@tailwindcss/typography": "^0.5.15",
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/node": "^22",
+		"@types/pg": "^8.15.5",
 		"drizzle-kit": "^0.30.2",
 		"drizzle-orm": "^0.40.0",
 		"eslint": "^9.18.0",
@@ -44,6 +45,7 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"pg": "^8.16.3",
 		"postgres": "^3.4.5"
 	}
 }
