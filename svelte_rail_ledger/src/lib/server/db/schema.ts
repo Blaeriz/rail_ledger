@@ -9,19 +9,21 @@ export const user_info = pgTable('user_info', {
   user_role: text('user_role')
 });
 
-// Batches table
-export const batch_info = pgTable('batch_info', {
-  batch_id: text('batch_id').primaryKey(),
-  vendor_id: text('vendor_id'),
-  batch_size: integer('batch_size'),
-  date_of_production: date('date_of_production'),
-  qc_status: text('qc_status'),
-  expiry_date: date('expiry_date'),
-  last_inspection_date: date('last_inspection_date'),
-  fitment_date: date('fitment_date'),
-  fitment_location: text('fitment_location'),
-  qr_hash: text('qr_hash')
-});
+export const batch_info = pgTable(
+  'batch_info',
+  {
+    batch_id: text('batch_id').primaryKey(),
+    vendor_id: text('vendor_id'),
+    batch_size: integer('batch_size'),
+    date_of_production: date('date_of_production'),
+    qc_status: text('qc_status'),
+    expiry_date: date('expiry_date'),
+    last_inspection_date: date('last_inspection_date'),
+    fitment_date: date('fitment_date'),
+    fitment_location: text('fitment_location'),
+    qr_hash: text('qr_hash'),
+  }
+);
 
 // Vendors table
 export const vendor_info = pgTable('vendor_info', {
