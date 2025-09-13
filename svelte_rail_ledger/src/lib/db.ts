@@ -2,18 +2,15 @@ import pkg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 const { Pool } = pkg;
 
-// Hardcoded database IP
-const DB_HOST = 'localhost'; 
-
 export const pool = new Pool({
-  user: process.env.DB_USER || 'archit',
-  host: DB_HOST,
-  database: process.env.DB_NAME || 'rail_ledger',
-  password: process.env.DB_PASS || '1234',
+  user: process.env.DB_USER || 'neondb_owner',
+  host: process.env.DB_HOST || 'ep-spring-poetry-a18e7nwj-pooler.ap-southeast-1.aws.neon.tech',
+  database: process.env.DB_NAME || 'neondb',
+  password: process.env.DB_PASS || 'npg_lxS5YBJREOf3',
   port: Number(process.env.DB_PORT) || 5432,
+  ssl: { rejectUnauthorized: false },
 });
 
-// Drizzle ORM client
 export const db = drizzle(pool);
 
-console.log('✅ Connected to Postgres via Drizzle');
+console.log('✅ Connected to Neon Postgres via Drizzle');
