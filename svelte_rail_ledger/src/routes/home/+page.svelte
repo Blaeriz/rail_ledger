@@ -31,7 +31,7 @@
     <div class="hero-content">
       <div class="logo-section">
         <span class="logo-icon">🚆</span>
-        <h1 class="logo-text">Rail_Ledger</h1>
+        <h1 class="logo-text">Rail Ledger</h1>
       </div>
       <h2 class="hero-title">Digital Track Fittings Management for Indian Railways</h2>
       <p class="hero-description">
@@ -132,7 +132,7 @@
 
   .cta-button {
     background: white;
-    color: #1e3a8a;
+    color: #000000;
     border: none;
     padding: 1rem 2rem;
     border-radius: 8px;
@@ -200,7 +200,7 @@
 
   .features-section {
     background: white;
-    color: #1e293b;
+    color: #000000;
     padding: 4rem 2rem;
   }
 
@@ -232,7 +232,7 @@
   .feature-card h3 {
     font-size: 1.5rem;
     margin: 0 0 1rem 0;
-    color: #1e3a8a;
+    color: #000000;
   }
 
   .feature-card p {

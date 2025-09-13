@@ -59,7 +59,7 @@
   }
 
   .analytics-page h1 {
-    color: #1e293b;
+    color: #000000;
     margin-bottom: 2rem;
     font-size: 1.75rem;
     font-weight: 700;
@@ -83,7 +83,7 @@
   }
 
   .chart-card h3 {
-    color: #1e293b;
+    color: #000000;
     margin: 0 0 1rem 0;
     font-size: 1.25rem;
   }

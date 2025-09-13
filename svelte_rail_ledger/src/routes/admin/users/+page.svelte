@@ -1,6 +1,7 @@
 <script>
   import Layout from '$lib/components/Layout.svelte';
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
 
   let userRole = '';
   let username = '';
@@ -55,6 +56,12 @@
       userRole = storedRole;
       username = storedUsername;
     }
+
+    // Check if we should auto-open the form
+    const urlParams = new URLSearchParams($page.url.search);
+    if (urlParams.get('action') === 'add') {
+      showAddForm = true;
+    }
   });
 
   function toggleAddForm() {
@@ -108,20 +115,20 @@
         <h2>Add New User</h2>
         <div class="form-grid">
           <div class="form-group">
-            <label>Aadhaar Number</label>
-            <input type="text" bind:value={newUser.aadhar} placeholder="Enter 12-digit Aadhaar" maxlength="12" />
+            <label for="user-aadhar">Aadhaar Number</label>
+            <input id="user-aadhar" type="text" bind:value={newUser.aadhar} placeholder="Enter 12-digit Aadhaar" maxlength="12" />
           </div>
           <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" bind:value={newUser.name} placeholder="Enter full name" />
+            <label for="user-name">Full Name</label>
+            <input id="user-name" type="text" bind:value={newUser.name} placeholder="Enter full name" />
           </div>
           <div class="form-group">
-            <label>Phone Number</label>
-            <input type="tel" bind:value={newUser.phone} placeholder="Enter phone number" />
+            <label for="user-phone">Phone Number</label>
+            <input id="user-phone" type="tel" bind:value={newUser.phone} placeholder="Enter phone number" />
           </div>
           <div class="form-group">
-            <label>Role</label>
-            <select bind:value={newUser.role}>
+            <label for="user-role">Role</label>
+            <select id="user-role" bind:value={newUser.role}>
               <option value="Admin">Admin</option>
               <option value="Inspector">Inspector</option>
               <option value="Viewer">Viewer</option>
@@ -192,7 +199,7 @@
   }
 
   .page-header h1 {
-    color: #1e293b;
+    color: #000000;
     margin: 0;
     font-size: 1.75rem;
     font-weight: 700;
@@ -226,7 +233,7 @@
   }
 
   .add-form h2 {
-    color: #1e293b;
+    color: #000000;
     margin: 0 0 1.5rem 0;
     font-size: 1.5rem;
   }
@@ -303,7 +310,7 @@
   }
 
   .table-header h2 {
-    color: #1e293b;
+    color: #000000;
     margin: 0;
     font-size: 1.25rem;
   }

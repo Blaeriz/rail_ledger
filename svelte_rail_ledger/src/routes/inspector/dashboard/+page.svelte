@@ -1,6 +1,7 @@
 <script>
   import Layout from '$lib/components/Layout.svelte';
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
 
   let userRole = '';
   let username = '';
@@ -40,6 +41,13 @@
     { id: 3, type: 'error', message: 'Batch #B002 failed initial inspection', priority: 'high' }
   ];
 
+  function startInspection(batchId) {
+    // Store the batch ID for the inspection
+    localStorage.setItem('currentInspectionBatch', batchId);
+    // Navigate to the scan page
+    goto('/inspector/scan');
+  }
+
   onMount(() => {
     const storedRole = localStorage.getItem('role');
     const storedUsername = localStorage.getItem('username');
@@ -57,32 +65,28 @@
     
     <!-- Summary Cards -->
     <div class="summary-cards">
-      <div class="summary-card">
-        <div class="card-icon">📋</div>
+      <div class="summary-card assigned">
         <div class="card-content">
           <h3>Assigned Inspections</h3>
           <p class="card-number">{assignedInspections.length}</p>
         </div>
       </div>
       
-      <div class="summary-card">
-        <div class="card-icon">⏰</div>
+      <div class="summary-card overdue">
         <div class="card-content">
           <h3>Overdue</h3>
           <p class="card-number">{assignedInspections.filter(i => i.status === 'Pending' && new Date(i.due_date) < new Date()).length}</p>
         </div>
       </div>
       
-      <div class="summary-card">
-        <div class="card-icon">✅</div>
+      <div class="summary-card completed">
         <div class="card-content">
           <h3>Completed Today</h3>
           <p class="card-number">3</p>
         </div>
       </div>
       
-      <div class="summary-card">
-        <div class="card-icon">❌</div>
+      <div class="summary-card failed">
         <div class="card-content">
           <h3>Failed Inspections</h3>
           <p class="card-number">1</p>
@@ -139,7 +143,9 @@
                   </span>
                 </td>
                 <td class="actions">
-                  <button class="inspect-btn">Start Inspection</button>
+                  <button class="inspect-btn" on:click={() => startInspection(inspection.batch_id)}>
+                    Start Inspection
+                  </button>
                 </td>
               </tr>
             {/each}
@@ -156,21 +162,24 @@
   }
 
   .inspector-dashboard h1 {
-    color: #1e293b;
+    color: #000000;
     margin-bottom: 2rem;
     font-size: 1.75rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
   .summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     margin-bottom: 3rem;
+  }
+
+  @media (max-width: 1200px) {
+    .summary-cards {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
   }
 
   @media (max-width: 768px) {
@@ -188,9 +197,6 @@
       padding: 1rem;
     }
     
-    .card-icon {
-      font-size: 2rem;
-    }
     
     .alerts-grid {
       grid-template-columns: 1fr;
@@ -215,36 +221,49 @@
 
   .summary-card {
     background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    transition: transform 0.3s;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    min-height: 60px;
+    border-left: 4px solid #e5e7eb;
+  }
+
+  .summary-card.assigned {
+    border-left-color: #3b82f6;
+  }
+
+  .summary-card.overdue {
+    border-left-color: #f59e0b;
+  }
+
+  .summary-card.completed {
+    border-left-color: #10b981;
+  }
+
+  .summary-card.failed {
+    border-left-color: #ef4444;
   }
 
   .summary-card:hover {
-    transform: translateY(-2px);
-  }
-
-  .card-icon {
-    font-size: 2.5rem;
-    opacity: 0.8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .card-content h3 {
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.125rem 0;
     color: #64748b;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .card-number {
     margin: 0;
-    font-size: 2rem;
+    font-size: 1.25rem;
     font-weight: bold;
-    color: #1e293b;
+    color: #000000;
   }
 
   .alerts-section {
@@ -252,7 +271,7 @@
   }
 
   .alerts-section h2 {
-    color: #1e293b;
+    color: #000000;
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
   }
@@ -314,7 +333,7 @@
   }
 
   .inspections-section h2 {
-    color: #1e293b;
+    color: #000000;
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
   }
@@ -400,13 +419,21 @@
     color: white;
     border: none;
     padding: 0.5rem 1rem;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.8rem;
     font-weight: 500;
+    transition: all 0.3s ease;
   }
 
   .inspect-btn:hover {
     background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .inspect-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
   }
 </style>

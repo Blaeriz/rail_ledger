@@ -16,6 +16,15 @@
       userRole = storedRole;
       username = storedUsername;
     }
+
+    // Check if we have a batch ID from the dashboard
+    const currentBatch = localStorage.getItem('currentInspectionBatch');
+    if (currentBatch) {
+      batchId = currentBatch;
+      searchBatch();
+      // Clear the stored batch ID after using it
+      localStorage.removeItem('currentInspectionBatch');
+    }
   });
 
   function scanQR() {
@@ -93,7 +102,7 @@
   }
 
   .scan-page h1 {
-    color: #1e293b;
+    color: #000000;
     margin-bottom: 2rem;
     font-size: 1.75rem;
     font-weight: 700;
