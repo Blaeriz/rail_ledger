@@ -31,8 +31,20 @@ To keep things smooth and consistent, please follow these rules:
    - **No secrets in the repo** → don’t commit `.env` or API keys.  
    - **Respect the team’s time** → keep discussions/issues focused and productive.  
 
+4. **Branch Naming Convention**  
+   - Use clear and consistent branch names.  
+   - Format: type/short-description  
+   - Examples:
+               feat/add-login-api
+               fix/railpad-scan-bug
+               chore/update-readme
+   - Match type with commit types (feat, fix, chore, docs, refactor, test).
 ---
 
 ✅ Stick to these guidelines → the project stays clean, collaborative, and easy to maintain.  
+
+
+
+
 
 Thanks for contributing 🚀
