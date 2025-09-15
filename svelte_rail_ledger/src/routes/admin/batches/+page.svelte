@@ -8,48 +8,10 @@
   let activePage = '/admin/batches';
   let showAddForm = false;
 
-  // Sample batch data
-  let batches = [
-    {
-      batch_id: 'B001',
-      vendor_id: 'V001',
-      vendor_name: 'Steel Works Ltd',
-      batch_size: 100,
-      production_date: '2024-01-10',
-      qc_status: 'Pass',
-      fitment_status: 'Completed',
-      expiry_date: '2025-01-10',
-      qr_hash: 'qr_hash_001_abc123'
-    },
-    {
-      batch_id: 'B002',
-      vendor_id: 'V001',
-      vendor_name: 'Steel Works Ltd',
-      batch_size: 150,
-      production_date: '2024-01-12',
-      qc_status: 'Pending Inspection',
-      fitment_status: 'Not Started',
-      expiry_date: '2025-01-12',
-      qr_hash: 'qr_hash_002_def456'
-    },
-    {
-      batch_id: 'B003',
-      vendor_id: 'V002',
-      vendor_name: 'Metal Solutions Inc',
-      batch_size: 75,
-      production_date: '2024-01-08',
-      qc_status: 'Fail',
-      fitment_status: 'Not Started',
-      expiry_date: '2025-01-08',
-      qr_hash: 'qr_hash_003_ghi789'
-    }
-  ];
-
-  let vendors = [
-    { vendor_id: 'V001', name: 'Steel Works Ltd' },
-    { vendor_id: 'V002', name: 'Metal Solutions Inc' },
-    { vendor_id: 'V003', name: 'Rail Components Co' }
-  ];
+  // Batch data from API
+  let batches = [];
+  let vendors = [];
+  let isLoading = true;
 
   // Form data
   let newBatch = {
@@ -60,7 +22,7 @@
     expiry_date: ''
   };
 
-  onMount(() => {
+  onMount(async () => {
     const storedRole = localStorage.getItem('role');
     const storedUsername = localStorage.getItem('username');
     
@@ -74,6 +36,26 @@
     if (urlParams.get('action') === 'add') {
       showAddForm = true;
     }
+
+    // Fetch data from APIs
+    try {
+      const [batchesResponse, vendorsResponse] = await Promise.all([
+        fetch('/api/batches'),
+        fetch('/api/vendors')
+      ]);
+
+      if (batchesResponse.ok) {
+        batches = await batchesResponse.json();
+      }
+      
+      if (vendorsResponse.ok) {
+        vendors = await vendorsResponse.json();
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+    
+    isLoading = false;
   });
 
   function toggleAddForm() {
@@ -93,23 +75,44 @@
     };
   }
 
-  function addBatch() {
+  async function addBatch() {
     if (newBatch.vendor_id && newBatch.batch_size && newBatch.production_date) {
-      const selectedVendor = vendors.find(v => v.vendor_id === newBatch.vendor_id);
-      const batch = {
-        batch_id: `B${String(batches.length + 1).padStart(3, '0')}`,
-        vendor_id: newBatch.vendor_id,
-        vendor_name: selectedVendor?.name || '',
-        batch_size: parseInt(newBatch.batch_size),
-        production_date: newBatch.production_date,
-        qc_status: newBatch.qc_status,
-        fitment_status: 'Not Started',
-        expiry_date: newBatch.expiry_date || '',
-        qr_hash: `qr_hash_${String(batches.length + 1).padStart(3, '0')}_${Math.random().toString(36).substr(2, 9)}`
-      };
-      batches = [...batches, batch];
-      resetForm();
-      showAddForm = false;
+      try {
+        const batchData = {
+          batch_id: `B${String(batches.length + 1).padStart(3, '0')}`,
+          vendor_id: newBatch.vendor_id,
+          batch_size: parseInt(newBatch.batch_size),
+          date_of_production: newBatch.production_date,
+          qc_status: newBatch.qc_status.toLowerCase(),
+          expiry_date: newBatch.expiry_date || null,
+          last_inspection_date: null,
+          fitment_date: null,
+          fitment_location: null,
+          qr_hash: `qr_hash_${String(batches.length + 1).padStart(3, '0')}_${Math.random().toString(36).substr(2, 9)}`
+        };
+
+        const response = await fetch('/api/batches', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(batchData)
+        });
+
+        if (response.ok) {
+          // Refresh the batches list
+          const batchesResponse = await fetch('/api/batches');
+          if (batchesResponse.ok) {
+            batches = await batchesResponse.json();
+          }
+          resetForm();
+          showAddForm = false;
+        } else {
+          console.error('Failed to add batch');
+        }
+      } catch (error) {
+        console.error('Error adding batch:', error);
+      }
     }
   }
 
@@ -180,6 +183,9 @@
         <span class="count">{batches.length} batches</span>
       </div>
       
+      {#if isLoading}
+        <div class="loading">Loading batches...</div>
+      {:else}
       <div class="table-wrapper">
         <table class="batches-table">
           <thead>
@@ -223,6 +229,7 @@
           </tbody>
         </table>
       </div>
+      {/if}
     </div>
   </div>
 </Layout>

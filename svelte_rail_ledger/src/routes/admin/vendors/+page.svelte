@@ -8,42 +8,9 @@
   let activePage = '/admin/vendors';
   let showAddForm = false;
 
-  // Sample vendor data
-  let vendors = [
-    {
-      vendor_id: 'V001',
-      name: 'Steel Works Ltd',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      audit_date: '2024-01-15',
-      gst_no: '29ABCDE1234F1Z5',
-      pan_number: 'ABCDE1234F',
-      email: 'contact@steelworks.com',
-      phone: '+91-9876543210'
-    },
-    {
-      vendor_id: 'V002',
-      name: 'Metal Solutions Inc',
-      city: 'Delhi',
-      state: 'Delhi',
-      audit_date: '2024-02-10',
-      gst_no: '07FGHIJ5678K2L6',
-      pan_number: 'FGHIJ5678K',
-      email: 'info@metalsolutions.com',
-      phone: '+91-9876543211'
-    },
-    {
-      vendor_id: 'V003',
-      name: 'Rail Components Co',
-      city: 'Bangalore',
-      state: 'Karnataka',
-      audit_date: '2024-01-28',
-      gst_no: '33MNOPQ9012R3S7',
-      pan_number: 'MNOPQ9012R',
-      email: 'sales@railcomponents.com',
-      phone: '+91-9876543212'
-    }
-  ];
+  // Vendor data from API
+  let vendors = [];
+  let isLoading = true;
 
   // Form data
   let newVendor = {
@@ -56,7 +23,7 @@
     state: ''
   };
 
-  onMount(() => {
+  onMount(async () => {
     const storedRole = localStorage.getItem('role');
     const storedUsername = localStorage.getItem('username');
     
@@ -70,6 +37,18 @@
     if (urlParams.get('action') === 'add') {
       showAddForm = true;
     }
+
+    // Fetch vendors from API
+    try {
+      const response = await fetch('/api/vendors');
+      if (response.ok) {
+        vendors = await response.json();
+      }
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+    }
+    
+    isLoading = false;
   });
 
   function toggleAddForm() {
@@ -91,22 +70,43 @@
     };
   }
 
-  function addVendor() {
+  async function addVendor() {
     if (newVendor.name && newVendor.gst_no && newVendor.pan_number) {
-      const vendor = {
-        vendor_id: `V${String(vendors.length + 1).padStart(3, '0')}`,
-        name: newVendor.name,
-        city: newVendor.city,
-        state: newVendor.state,
-        audit_date: new Date().toISOString().split('T')[0],
-        gst_no: newVendor.gst_no,
-        pan_number: newVendor.pan_number,
-        email: newVendor.email,
-        phone: newVendor.phone
-      };
-      vendors = [...vendors, vendor];
-      resetForm();
-      showAddForm = false;
+      try {
+        const vendorData = {
+          vendor_id: `V${String(vendors.length + 1).padStart(3, '0')}`,
+          city: newVendor.city,
+          state: newVendor.state,
+          audit_date: new Date().toISOString().split('T')[0],
+          gst_no: newVendor.gst_no,
+          pan_number: newVendor.pan_number,
+          email: newVendor.email,
+          phone_number: newVendor.phone,
+          no_of_batches: 0
+        };
+
+        const response = await fetch('/api/vendors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(vendorData)
+        });
+
+        if (response.ok) {
+          // Refresh the vendors list
+          const vendorsResponse = await fetch('/api/vendors');
+          if (vendorsResponse.ok) {
+            vendors = await vendorsResponse.json();
+          }
+          resetForm();
+          showAddForm = false;
+        } else {
+          console.error('Failed to add vendor');
+        }
+      } catch (error) {
+        console.error('Error adding vendor:', error);
+      }
     }
   }
 
@@ -171,6 +171,10 @@
         <h2>Vendor List</h2>
         <span class="count">{vendors.length} vendors</span>
       </div>
+      
+      {#if isLoading}
+        <div class="loading">Loading vendors...</div>
+      {:else}
       
       <!-- Desktop Table View -->
       <div class="desktop-table">
@@ -290,6 +294,7 @@
           </div>
         {/each}
       </div>
+      {/if}
     </div>
   </div>
 </Layout>

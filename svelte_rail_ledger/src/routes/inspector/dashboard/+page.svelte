@@ -1,54 +1,66 @@
 <script>
   import Layout from '$lib/components/Layout.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
+  import AnalyticsCard from '$lib/components/AnalyticsCard.svelte';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  // Removed problematic data store import
 
   let userRole = '';
   let username = '';
   let activePage = '/inspector/dashboard';
-
-  // Sample inspection data
-  let assignedInspections = [
-    {
-      batch_id: 'B001',
-      due_date: '2024-02-15',
-      status: 'Pending',
-      priority: 'High',
-      vendor: 'Steel Works Ltd',
-      location: 'Mumbai Central'
-    },
-    {
-      batch_id: 'B002',
-      due_date: '2024-02-18',
-      status: 'In Progress',
-      priority: 'Medium',
-      vendor: 'Steel Works Ltd',
-      location: 'Mumbai Central'
-    },
-    {
-      batch_id: 'B003',
-      due_date: '2024-02-20',
-      status: 'Pending',
-      priority: 'Low',
-      vendor: 'Metal Solutions Inc',
-      location: 'Delhi Station'
-    }
-  ];
-
-  let alerts = [
-    { id: 1, type: 'warning', message: 'Batch #B001 inspection overdue by 2 days', priority: 'high' },
-    { id: 2, type: 'info', message: 'New inspection assigned for Batch #B004', priority: 'medium' },
-    { id: 3, type: 'error', message: 'Batch #B002 failed initial inspection', priority: 'high' }
-  ];
+  // Simple data without data store
+  let vendors = [];
+  let batches = [];
+  let users = [];
+  let isLoading = true;
 
   function startInspection(batchId) {
-    // Store the batch ID for the inspection
     localStorage.setItem('currentInspectionBatch', batchId);
-    // Navigate to the scan page
     goto('/inspector/scan');
   }
 
-  onMount(() => {
+  // Computed values
+  $: summaryData = {
+    totalInspections: batches.length,
+    pendingInspections: batches.filter(b => b.qc_status === 'pending').length,
+    completedInspections: batches.filter(b => b.qc_status === 'completed').length,
+    failedInspections: batches.filter(b => b.qc_status === 'failed').length
+  };
+
+  $: assignedInspections = batches.filter(b => b.qc_status === 'pending').slice(0, 10).map(batch => ({
+    batch_id: batch.batch_id,
+    vendor: vendors.find(v => v.vendor_id === batch.vendor_id)?.city || 'Unknown',
+    location: batch.fitment_location || 'TBD',
+    due_date: batch.expiry_date || 'N/A',
+    status: batch.qc_status,
+    priority: 'High'
+  }));
+
+  $: inspectionHistory = batches
+    .filter(b => b.last_inspection_date)
+    .sort((a, b) => new Date(b.last_inspection_date) - new Date(a.last_inspection_date))
+    .slice(0, 10)
+    .map(batch => ({
+      ...batch,
+      vendor_name: vendors.find(v => v.vendor_id === batch.vendor_id)?.city || 'Unknown'
+    }));
+
+  $: vendorPerformance = vendors.map(vendor => {
+    const vendorBatches = batches.filter(b => b.vendor_id === vendor.vendor_id);
+    const completedBatches = vendorBatches.filter(b => b.qc_status === 'completed');
+    const successRate = vendorBatches.length > 0 ? Math.round((completedBatches.length / vendorBatches.length) * 100) : 0;
+    
+    return {
+      vendor_id: vendor.vendor_id,
+      city: vendor.city || 'Unknown',
+      total_batches: vendorBatches.length,
+      success_rate: successRate,
+      contact: vendor.email || vendor.phone_number || 'N/A'
+    };
+  });
+
+  onMount(async () => {
     const storedRole = localStorage.getItem('role');
     const storedUsername = localStorage.getItem('username');
     
@@ -56,6 +68,31 @@
       userRole = storedRole;
       username = storedUsername;
     }
+    
+    try {
+      // Fetch real data from APIs
+      const [vendorsResponse, batchesResponse, usersResponse] = await Promise.all([
+        fetch('/api/vendors'),
+        fetch('/api/batches'),
+        fetch('/api/users')
+      ]);
+
+      if (vendorsResponse.ok) {
+        vendors = await vendorsResponse.json();
+      }
+      
+      if (batchesResponse.ok) {
+        batches = await batchesResponse.json();
+      }
+      
+      if (usersResponse.ok) {
+        users = await usersResponse.json();
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+    
+    isLoading = false;
   });
 </script>
 
@@ -63,96 +100,67 @@
   <div class="inspector-dashboard">
     <h1>Inspector Dashboard</h1>
     
-    <!-- Summary Cards -->
-    <div class="summary-cards">
-      <div class="summary-card assigned">
-        <div class="card-content">
-          <h3>Assigned Inspections</h3>
-          <p class="card-number">{assignedInspections.length}</p>
-        </div>
+    {#if isLoading}
+      <div class="loading">Loading...</div>
+    {:else}
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <AnalyticsCard title="Total Inspections" value={summaryData.totalInspections} color="#3b82f6" />
+        <AnalyticsCard title="Pending Inspections" value={summaryData.pendingInspections} color="#f59e0b" />
+        <AnalyticsCard title="Completed Today" value={summaryData.completedInspections} color="#10b981" />
+        <AnalyticsCard title="Failed Inspections" value={summaryData.failedInspections} color="#ef4444" />
       </div>
-      
-      <div class="summary-card overdue">
-        <div class="card-content">
-          <h3>Overdue</h3>
-          <p class="card-number">{assignedInspections.filter(i => i.status === 'Pending' && new Date(i.due_date) < new Date()).length}</p>
-        </div>
-      </div>
-      
-      <div class="summary-card completed">
-        <div class="card-content">
-          <h3>Completed Today</h3>
-          <p class="card-number">3</p>
-        </div>
-      </div>
-      
-      <div class="summary-card failed">
-        <div class="card-content">
-          <h3>Failed Inspections</h3>
-          <p class="card-number">1</p>
-        </div>
-      </div>
-    </div>
 
-    <!-- Alerts Section -->
-    <div class="alerts-section">
-      <h2>Alerts & Notifications</h2>
-      <div class="alerts-grid">
-        {#each alerts as alert}
-          <div class="alert-card alert-{alert.type}">
-            <div class="alert-priority priority-{alert.priority}">
-              {alert.priority.toUpperCase()}
-            </div>
-            <p class="alert-message">{alert.message}</p>
-          </div>
-        {/each}
-      </div>
-    </div>
+      <!-- Assigned Inspections -->
+      <DataTable 
+        title="Assigned Inspections" 
+        data={assignedInspections} 
+        columns={[
+          { key: 'batch_id', label: 'Batch ID' },
+          { key: 'vendor', label: 'Vendor' },
+          { key: 'location', label: 'Location' },
+          { key: 'due_date', label: 'Due Date', type: 'date' },
+          { key: 'status', label: 'Status', type: 'status' },
+          { key: 'priority', label: 'Priority' }
+        ]}
+        searchable={true}
+      />
 
-    <!-- Assigned Inspections -->
-    <div class="inspections-section">
-      <h2>Assigned Inspections</h2>
-      <div class="table-container">
-        <table class="inspections-table">
-          <thead>
-            <tr>
-              <th>Batch ID</th>
-              <th>Vendor</th>
-              <th>Location</th>
-              <th>Due Date</th>
-              <th>Status</th>
-              <th>Priority</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each assignedInspections as inspection}
-              <tr>
-                <td>{inspection.batch_id}</td>
-                <td>{inspection.vendor}</td>
-                <td>{inspection.location}</td>
-                <td>{inspection.due_date}</td>
-                <td>
-                  <span class="status status-{inspection.status.toLowerCase().replace(' ', '-')}">
-                    {inspection.status}
-                  </span>
-                </td>
-                <td>
-                  <span class="priority priority-{inspection.priority.toLowerCase()}">
-                    {inspection.priority}
-                  </span>
-                </td>
-                <td class="actions">
-                  <button class="inspect-btn" on:click={() => startInspection(inspection.batch_id)}>
-                    Start Inspection
-                  </button>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+      <!-- Inspection History -->
+      <DataTable 
+        title="Recent Inspection History" 
+        data={inspectionHistory} 
+        columns={[
+          { key: 'batch_id', label: 'Batch ID' },
+          { key: 'vendor_name', label: 'Vendor' },
+          { key: 'last_inspection_date', label: 'Inspection Date', type: 'date' },
+          { key: 'qc_status', label: 'Status', type: 'status' },
+          { key: 'fitment_location', label: 'Location' }
+        ]}
+        searchable={true}
+      />
+
+      <!-- Vendor Performance -->
+      <DataTable 
+        title="Vendor Performance" 
+        data={vendorPerformance} 
+        columns={[
+          { key: 'vendor_id', label: 'Vendor ID' },
+          { key: 'city', label: 'Location' },
+          { key: 'total_batches', label: 'Total Batches' },
+          { key: 'success_rate', label: 'Success Rate', type: 'progress' },
+          { key: 'contact', label: 'Contact' }
+        ]}
+        searchable={true}
+      />
+
+      <!-- Quick Actions -->
+      <div class="actions">
+        <button on:click={() => goto('/inspector/scan')}>Start New Inspection</button>
+        <button on:click={() => goto('/inspector/inspections')}>View All Inspections</button>
+        <button on:click={() => goto('/inspector/fitments')}>Manage Fitments</button>
       </div>
-    </div>
+    {/if}
   </div>
 </Layout>
 
@@ -168,272 +176,57 @@
     font-weight: 700;
   }
 
-  .summary-cards {
+  .summary-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
   }
 
-  @media (max-width: 1200px) {
-    .summary-cards {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-    }
+  .actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .actions button {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .actions button:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+  }
+
+  .loading, .error {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.1rem;
+  }
+
+  .error {
+    color: #ef4444;
   }
 
   @media (max-width: 768px) {
     .inspector-dashboard {
       padding: 1rem;
     }
-    
-    .summary-cards {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .summary-card {
-      padding: 1rem;
-    }
-    
-    
-    .alerts-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .inspections-table {
-      font-size: 0.875rem;
-    }
-  }
 
-  @media (max-width: 480px) {
-    .inspector-dashboard {
-      padding: 0.5rem;
+    .summary-grid {
+      grid-template-columns: 1fr;
     }
-    
-    .summary-card {
+
+    .actions {
       flex-direction: column;
-      text-align: center;
-      gap: 0.5rem;
     }
-  }
-
-  .summary-card {
-    background: white;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    min-height: 60px;
-    border-left: 4px solid #e5e7eb;
-  }
-
-  .summary-card.assigned {
-    border-left-color: #3b82f6;
-  }
-
-  .summary-card.overdue {
-    border-left-color: #f59e0b;
-  }
-
-  .summary-card.completed {
-    border-left-color: #10b981;
-  }
-
-  .summary-card.failed {
-    border-left-color: #ef4444;
-  }
-
-  .summary-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  .card-content h3 {
-    margin: 0 0 0.125rem 0;
-    color: #64748b;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .card-number {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: #000000;
-  }
-
-  .alerts-section {
-    margin-bottom: 3rem;
-  }
-
-  .alerts-section h2 {
-    color: #000000;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-  }
-
-  .alerts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1rem;
-  }
-
-  .alert-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid #e5e7eb;
-  }
-
-  .alert-warning {
-    border-left-color: #f59e0b;
-  }
-
-  .alert-info {
-    border-left-color: #3b82f6;
-  }
-
-  .alert-error {
-    border-left-color: #ef4444;
-  }
-
-  .alert-priority {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-  }
-
-  .priority-high {
-    background: #fef2f2;
-    color: #dc2626;
-  }
-
-  .priority-medium {
-    background: #fef3c7;
-    color: #d97706;
-  }
-
-  .priority-low {
-    background: #f0fdf4;
-    color: #059669;
-  }
-
-  .alert-message {
-    margin: 0;
-    color: #374151;
-    font-size: 0.9rem;
-  }
-
-  .inspections-section h2 {
-    color: #000000;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-  }
-
-  .table-container {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-  }
-
-  .inspections-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .inspections-table th {
-    background: #f8fafc;
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    color: #374151;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .inspections-table td {
-    padding: 1rem;
-    border-bottom: 1px solid #f1f5f9;
-    color: #64748b;
-  }
-
-  .inspections-table tr:hover {
-    background: #f8fafc;
-  }
-
-  .status {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  .status-pending {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  .status-in-progress {
-    background: #dbeafe;
-    color: #1e40af;
-  }
-
-  .priority {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .priority-high {
-    background: #fef2f2;
-    color: #dc2626;
-  }
-
-  .priority-medium {
-    background: #fef3c7;
-    color: #d97706;
-  }
-
-  .priority-low {
-    background: #f0fdf4;
-    color: #059669;
-  }
-
-  .actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .inspect-btn {
-    background: #3b82f6;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-  }
-
-  .inspect-btn:hover {
-    background: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  }
-
-  .inspect-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
   }
 </style>

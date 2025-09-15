@@ -8,37 +8,9 @@
   let activePage = '/admin/users';
   let showAddForm = false;
 
-  // Sample user data
-  let users = [
-    {
-      user_id: 'u001',
-      aadhar: '123456789012',
-      name: 'Rajesh Kumar',
-      phone: '+91-9876543210',
-      role: 'Admin'
-    },
-    {
-      user_id: 'u002',
-      aadhar: '234567890123',
-      name: 'Priya Sharma',
-      phone: '+91-9876543211',
-      role: 'Inspector'
-    },
-    {
-      user_id: 'u003',
-      aadhar: '345678901234',
-      name: 'Amit Singh',
-      phone: '+91-9876543212',
-      role: 'Viewer'
-    },
-    {
-      user_id: 'u004',
-      aadhar: '456789012345',
-      name: 'Sneha Patel',
-      phone: '+91-9876543213',
-      role: 'Inspector'
-    }
-  ];
+  // User data from API
+  let users = [];
+  let isLoading = true;
 
   // Form data
   let newUser = {
@@ -48,7 +20,7 @@
     role: 'Viewer'
   };
 
-  onMount(() => {
+  onMount(async () => {
     const storedRole = localStorage.getItem('role');
     const storedUsername = localStorage.getItem('username');
     
@@ -62,6 +34,18 @@
     if (urlParams.get('action') === 'add') {
       showAddForm = true;
     }
+
+    // Fetch users from API
+    try {
+      const response = await fetch('/api/users');
+      if (response.ok) {
+        users = await response.json();
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+    
+    isLoading = false;
   });
 
   function toggleAddForm() {
@@ -80,18 +64,39 @@
     };
   }
 
-  function addUser() {
+  async function addUser() {
     if (newUser.aadhar && newUser.name && newUser.phone) {
-      const user = {
-        user_id: `u${String(users.length + 1).padStart(3, '0')}`,
-        aadhar: newUser.aadhar,
-        name: newUser.name,
-        phone: newUser.phone,
-        role: newUser.role
-      };
-      users = [...users, user];
-      resetForm();
-      showAddForm = false;
+      try {
+        const userData = {
+          user_id: `u${String(users.length + 1).padStart(3, '0')}`,
+          aadhar: newUser.aadhar,
+          name: newUser.name,
+          phone_number: newUser.phone,
+          user_role: newUser.role
+        };
+
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData)
+        });
+
+        if (response.ok) {
+          // Refresh the users list
+          const usersResponse = await fetch('/api/users');
+          if (usersResponse.ok) {
+            users = await usersResponse.json();
+          }
+          resetForm();
+          showAddForm = false;
+        } else {
+          console.error('Failed to add user');
+        }
+      } catch (error) {
+        console.error('Error adding user:', error);
+      }
     }
   }
 
@@ -149,6 +154,9 @@
         <span class="count">{users.length} users</span>
       </div>
       
+      {#if isLoading}
+        <div class="loading">Loading users...</div>
+      {:else}
       <div class="table-wrapper">
         <table class="users-table">
           <thead>
@@ -182,6 +190,7 @@
           </tbody>
         </table>
       </div>
+      {/if}
     </div>
   </div>
 </Layout>
