@@ -175,6 +175,11 @@
       padding: 1rem;
     }
     
+    .alerts-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
     .summary-cards {
       grid-template-columns: 1fr;
       gap: 1rem;
