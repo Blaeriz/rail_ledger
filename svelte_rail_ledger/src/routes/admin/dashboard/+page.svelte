@@ -31,7 +31,8 @@
 
   $: recentBatches = batches.slice(0, 5).map(batch => ({
     ...batch,
-    vendor_name: vendors.find(v => v.vendor_id === batch.vendor_id)?.city || 'Unknown'
+    vendor_name: vendors.find(v => v.vendor_id === batch.vendor_id)?.city || 'Unknown',
+    date_of_production: batch.date_of_production
   }));
 
   $: vendorStats = vendors.map(vendor => {

@@ -46,10 +46,16 @@
 
       if (batchesResponse.ok) {
         batches = await batchesResponse.json();
+        console.log('Batches loaded:', batches.length);
+      } else {
+        console.error('Failed to fetch batches:', batchesResponse.status);
       }
       
       if (vendorsResponse.ok) {
         vendors = await vendorsResponse.json();
+        console.log('Vendors loaded:', vendors.length);
+      } else {
+        console.error('Failed to fetch vendors:', vendorsResponse.status);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -185,6 +191,8 @@
       
       {#if isLoading}
         <div class="loading">Loading batches...</div>
+      {:else if batches.length === 0}
+        <div class="loading">No batches found in database</div>
       {:else}
       <div class="table-wrapper">
         <table class="batches-table">
@@ -205,17 +213,23 @@
             {#each batches as batch}
               <tr>
                 <td>{batch.batch_id}</td>
-                <td>{batch.vendor_name}</td>
-                <td>{batch.batch_size}</td>
-                <td>{batch.production_date}</td>
                 <td>
-                  <span class="status status-{batch.qc_status.toLowerCase().replace(' ', '-')}">
+                  {#each vendors as vendor}
+                    {#if vendor.vendor_id === batch.vendor_id}
+                      {vendor.city || batch.vendor_id}
+                    {/if}
+                  {/each}
+                </td>
+                <td>{batch.batch_size}</td>
+                <td>{batch.date_of_production}</td>
+                <td>
+                  <span class="status status-{batch.qc_status?.toLowerCase().replace(' ', '-')}">
                     {batch.qc_status}
                   </span>
                 </td>
                 <td>
-                  <span class="status status-{batch.fitment_status.toLowerCase().replace(' ', '-')}">
-                    {batch.fitment_status}
+                  <span class="status status-{batch.fitment_date ? 'completed' : 'not-started'}">
+                    {batch.fitment_date ? 'Completed' : 'Not Started'}
                   </span>
                 </td>
                 <td>{batch.expiry_date}</td>
@@ -499,5 +513,12 @@
 
   .delete-btn:hover {
     background: #dc2626;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.1rem;
+    color: #64748b;
   }
 </style>
