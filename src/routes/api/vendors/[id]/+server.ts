@@ -7,6 +7,9 @@ import { eq } from 'drizzle-orm';
 export const GET: RequestHandler = async ({ params }) => {
   try {
     const id = params.id; // vendor_id is text
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Vendor ID is required' }), { status: 400 });
+    }
     const [vendor] = await db.select().from(vendor_info).where(eq(vendor_info.vendor_id, id));
     if (!vendor) {
       return new Response(JSON.stringify({ error: 'Vendor not found' }), { status: 404 });
@@ -22,6 +25,9 @@ export const GET: RequestHandler = async ({ params }) => {
 export const PUT: RequestHandler = async ({ params, request }) => {
   try {
     const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Vendor ID is required' }), { status: 400 });
+    }
     const data = await request.json();
     const [updated] = await db
       .update(vendor_info)
@@ -52,6 +58,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 export const DELETE: RequestHandler = async ({ params }) => {
   try {
     const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Vendor ID is required' }), { status: 400 });
+    }
     const [deleted] = await db.delete(vendor_info).where(eq(vendor_info.vendor_id, id)).returning();
     if (!deleted) {
       return new Response(JSON.stringify({ error: 'Vendor not found' }), { status: 404 });

@@ -7,6 +7,9 @@ import { eq } from 'drizzle-orm';
 export const GET: RequestHandler = async ({ params }) => {
   try {
     const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Batch ID is required' }), { status: 400 });
+    }
     const [batch] = await db.select().from(batch_info).where(eq(batch_info.batch_id, id));
     if (!batch) {
       return new Response(JSON.stringify({ error: 'Batch not found' }), { status: 404 });
@@ -22,6 +25,9 @@ export const GET: RequestHandler = async ({ params }) => {
 export const PUT: RequestHandler = async ({ params, request }) => {
   try {
     const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Batch ID is required' }), { status: 400 });
+    }
     const data = await request.json();
     const [updated] = await db
       .update(batch_info)
@@ -54,6 +60,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 export const DELETE: RequestHandler = async ({ params }) => {
   try {
     const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Batch ID is required' }), { status: 400 });
+    }
     const [deleted] = await db.delete(batch_info).where(eq(batch_info.batch_id, id)).returning();
     if (!deleted) {
       return new Response(JSON.stringify({ error: 'Batch not found' }), { status: 404 });
