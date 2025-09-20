@@ -56,7 +56,11 @@
   function calculateSummaryStats() {
     summaryStats.totalVendors = vendorData.length;
     summaryStats.totalBatches = batchData.length;
-    summaryStats.pendingInspections = batchData.filter(batch => !batch.last_inspection_date).length;
+    summaryStats.pendingInspections = batchData.filter(batch => 
+      batch.qc_status === 'Pending Inspection' || batch.qc_status === 'Pending' || batch.qc_status === 'PENDING' || batch.qc_status === 'PENDING INSPECTION' ||
+      batch.status === 'Pending Inspection' || batch.status === 'Pending' || batch.status === 'PENDING' || batch.status === 'PENDING INSPECTION' ||
+      batch.inspection_status === 'Pending Inspection' || batch.inspection_status === 'Pending' || batch.inspection_status === 'PENDING' || batch.inspection_status === 'PENDING INSPECTION'
+    ).length;
     summaryStats.failedBatches = batchData.filter(batch => batch.qc_status === 'Fail').length;
   }
 

@@ -50,7 +50,11 @@
   }
 
   function calculateInspectorStats() {
-    inspectorStats.pendingInspections = batchData.filter(b => !b.last_inspection_date).length;
+    inspectorStats.pendingInspections = batchData.filter(b => 
+      b.qc_status === 'Pending Inspection' || b.qc_status === 'Pending' || b.qc_status === 'PENDING' || b.qc_status === 'PENDING INSPECTION' ||
+      b.status === 'Pending Inspection' || b.status === 'Pending' || b.status === 'PENDING' || b.status === 'PENDING INSPECTION' ||
+      b.inspection_status === 'Pending Inspection' || b.inspection_status === 'Pending' || b.inspection_status === 'PENDING' || b.inspection_status === 'PENDING INSPECTION'
+    ).length;
     inspectorStats.failedBatches = batchData.filter(b => b.qc_status === 'Fail').length;
     
     // Count reports created today by this inspector

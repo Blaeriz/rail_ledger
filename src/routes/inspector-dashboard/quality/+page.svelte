@@ -147,10 +147,20 @@
 
   function updateChartData() {
     // Quality Status Distribution
-    const passCount = batchData.filter((/** @type {any} */ b) => b.qc_status === 'Pass' || b.qc_status === 'PASS').length;
-    const failCount = batchData.filter((/** @type {any} */ b) => b.qc_status === 'Fail' || b.qc_status === 'FAIL').length;
+    const passCount = batchData.filter((/** @type {any} */ b) => 
+      b.qc_status === 'Pass' || b.qc_status === 'PASS' || 
+      b.status === 'Pass' || b.status === 'PASS' ||
+      b.inspection_status === 'Pass' || b.inspection_status === 'PASS'
+    ).length;
+    const failCount = batchData.filter((/** @type {any} */ b) => 
+      b.qc_status === 'Fail' || b.qc_status === 'FAIL' || 
+      b.status === 'Fail' || b.status === 'FAIL' ||
+      b.inspection_status === 'Fail' || b.inspection_status === 'FAIL'
+    ).length;
     const pendingCount = batchData.filter((/** @type {any} */ b) => 
-      !b.qc_status || b.qc_status === 'Pending' || b.qc_status === 'PENDING'
+      b.qc_status === 'Pending Inspection' || b.qc_status === 'Pending' || b.qc_status === 'PENDING' || b.qc_status === 'PENDING INSPECTION' ||
+      b.status === 'Pending Inspection' || b.status === 'Pending' || b.status === 'PENDING' || b.status === 'PENDING INSPECTION' ||
+      b.inspection_status === 'Pending Inspection' || b.inspection_status === 'Pending' || b.inspection_status === 'PENDING' || b.inspection_status === 'PENDING INSPECTION'
     ).length;
 
     if (passCount === 0 && failCount === 0 && pendingCount === 0) {
