@@ -7,6 +7,9 @@ import { eq } from 'drizzle-orm';
 export const GET: RequestHandler = async ({ params }) => {
   try {
     const id = params.id; // user_id is text
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'User ID is required' }), { status: 400 });
+    }
     const [user] = await db.select().from(user_info).where(eq(user_info.user_id, id));
     if (!user) {
       return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
@@ -22,6 +25,9 @@ export const GET: RequestHandler = async ({ params }) => {
 export const PUT: RequestHandler = async ({ params, request }) => {
   try {
     const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'User ID is required' }), { status: 400 });
+    }
     const data = await request.json();
     const [updated] = await db
       .update(user_info)
@@ -48,6 +54,9 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 export const DELETE: RequestHandler = async ({ params }) => {
   try {
     const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'User ID is required' }), { status: 400 });
+    }
     const [deleted] = await db.delete(user_info).where(eq(user_info.user_id, id)).returning();
     if (!deleted) {
       return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
