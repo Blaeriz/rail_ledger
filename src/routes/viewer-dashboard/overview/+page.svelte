@@ -56,7 +56,11 @@
     viewerStats.totalBatches = batchData.length;
     viewerStats.passedBatches = batchData.filter(b => b.qc_status === 'Pass').length;
     viewerStats.failedBatches = batchData.filter(b => b.qc_status === 'Fail').length;
-    viewerStats.pendingInspections = batchData.filter(b => !b.last_inspection_date).length;
+    viewerStats.pendingInspections = batchData.filter(b => 
+      b.qc_status === 'Pending Inspection' || b.qc_status === 'Pending' || b.qc_status === 'PENDING' || b.qc_status === 'PENDING INSPECTION' ||
+      b.status === 'Pending Inspection' || b.status === 'Pending' || b.status === 'PENDING' || b.status === 'PENDING INSPECTION' ||
+      b.inspection_status === 'Pending Inspection' || b.inspection_status === 'Pending' || b.inspection_status === 'PENDING' || b.inspection_status === 'PENDING INSPECTION'
+    ).length;
 
     // Recent activity (last 10 reports)
     viewerStats.recentActivity = reportData

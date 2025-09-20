@@ -63,7 +63,11 @@ export function calculateSummaryStats(
 ): SummaryStats {
   const totalVendors = vendors.length;
   const totalBatches = batches.length;
-  const pendingInspections = batches.filter(b => !b.last_inspection_date).length;
+  const pendingInspections = batches.filter(b => 
+    b.qc_status === 'Pending Inspection' || b.qc_status === 'Pending' || b.qc_status === 'PENDING' || b.qc_status === 'PENDING INSPECTION' ||
+    b.status === 'Pending Inspection' || b.status === 'Pending' || b.status === 'PENDING' || b.status === 'PENDING INSPECTION' ||
+    b.inspection_status === 'Pending Inspection' || b.inspection_status === 'Pending' || b.inspection_status === 'PENDING' || b.inspection_status === 'PENDING INSPECTION'
+  ).length;
   const failedBatches = reports.filter(r => r.status === 0).length;
   
   return {

@@ -34,20 +34,67 @@
       vendorData = vendors || [];
       batchData = batches || [];
       reportData = reports || [];
-      summaryStats = calculateSummaryStats(vendorData, batchData, reportData);
+      
+      // Calculate summary stats with proper data handling
+      summaryStats = {
+        totalVendors: vendorData.length,
+        totalBatches: batchData.length,
+        pendingInspections: batchData.filter(b => 
+          b.qc_status === 'Pending Inspection' || b.qc_status === 'Pending' || b.qc_status === 'PENDING' || b.qc_status === 'PENDING INSPECTION' ||
+          b.status === 'Pending Inspection' || b.status === 'Pending' || b.status === 'PENDING' || b.status === 'PENDING INSPECTION' ||
+          b.inspection_status === 'Pending Inspection' || b.inspection_status === 'Pending' || b.inspection_status === 'PENDING' || b.inspection_status === 'PENDING INSPECTION'
+        ).length,
+        failedBatches: batchData.filter(b => 
+          b.qc_status === 'Fail' || b.qc_status === 'FAIL' || 
+          b.status === 'Fail' || b.status === 'FAIL' ||
+          b.inspection_status === 'Fail' || b.inspection_status === 'FAIL'
+        ).length
+      };
+      
       updateChartData();
       isLoading = false;
     } catch (error) {
       console.error('Error loading data:', error);
+      // Set empty data if APIs fail
+      vendorData = [];
+      batchData = [];
+      reportData = [];
+      summaryStats = {
+        totalVendors: 0,
+        totalBatches: 0,
+        pendingInspections: 0,
+        failedBatches: 0
+      };
       isLoading = false;
     }
   });
 
   function updateChartData() {
     // Quality chart - handle different status formats with enhanced colors
-    const passCount = batchData.filter(b => b.qc_status === 'Pass' || b.qc_status === 'PASS').length;
-    const failCount = batchData.filter(b => b.qc_status === 'Fail' || b.qc_status === 'FAIL').length;
-    const pendingCount = batchData.filter(b => b.qc_status === 'Pending' || b.qc_status === 'PENDING' || b.qc_status === 'PENDING INSPECTION').length;
+    const passCount = batchData.filter(b => 
+      b.qc_status === 'Pass' || b.qc_status === 'PASS' || 
+      b.status === 'Pass' || b.status === 'PASS' ||
+      b.inspection_status === 'Pass' || b.inspection_status === 'PASS'
+    ).length;
+    const failCount = batchData.filter(b => 
+      b.qc_status === 'Fail' || b.qc_status === 'FAIL' || 
+      b.status === 'Fail' || b.status === 'FAIL' ||
+      b.inspection_status === 'Fail' || b.inspection_status === 'FAIL'
+    ).length;
+    const pendingCount = batchData.filter(b => 
+      b.qc_status === 'Pending Inspection' || b.qc_status === 'Pending' || b.qc_status === 'PENDING' || b.qc_status === 'PENDING INSPECTION' ||
+      b.status === 'Pending Inspection' || b.status === 'Pending' || b.status === 'PENDING' || b.status === 'PENDING INSPECTION' ||
+      b.inspection_status === 'Pending Inspection' || b.inspection_status === 'Pending' || b.inspection_status === 'PENDING' || b.inspection_status === 'PENDING INSPECTION'
+    ).length;
+    
+    // Debug logging for quality chart data
+    console.log('Quality Chart Data:', { passCount, failCount, pendingCount, totalBatches: batchData.length });
+    console.log('Sample batch data:', batchData.slice(0, 3).map(b => ({ 
+      batch_id: b.batch_id, 
+      qc_status: b.qc_status, 
+      status: b.status, 
+      inspection_status: b.inspection_status 
+    })));
     
     // Ensure we have at least some data for the chart
     const total = passCount + failCount + pendingCount;
@@ -122,31 +169,46 @@
       };
     }
 
-    // Monthly trends data with enhanced styling
+    // Monthly trends data - only real data
     const monthlyData = calculateMonthlyTrends();
-    monthlyTrendsData = { 
-      labels: monthlyData.labels, 
-      datasets: [
-        { 
-          label: 'Passed', 
-          data: monthlyData.passedData, 
-          borderColor: '#10B981', 
-          backgroundColor: 'rgba(16, 185, 129, 0.15)', 
-          borderWidth: 4, 
-          fill: true, 
+    if (monthlyData.passedData.every(v => v === 0) && monthlyData.failedData.every(v => v === 0)) {
+      monthlyTrendsData = {
+        labels: ['No Data'],
+        datasets: [{
+          label: 'No Data',
+          data: [1],
+          borderColor: '#6B7280',
+          backgroundColor: 'rgba(107, 114, 128, 0.1)',
+          borderWidth: 4,
+          fill: true,
           tension: 0.4
-        }, 
-        { 
-          label: 'Failed', 
-          data: monthlyData.failedData, 
-          borderColor: '#EF4444', 
-          backgroundColor: 'rgba(239, 68, 68, 0.15)', 
-          borderWidth: 4, 
-          fill: true, 
-          tension: 0.4
-        }
-      ] 
-    };
+        }]
+      };
+    } else {
+      monthlyTrendsData = { 
+        labels: monthlyData.labels, 
+        datasets: [
+          { 
+            label: 'Passed', 
+            data: monthlyData.passedData, 
+            borderColor: '#10B981', 
+            backgroundColor: 'rgba(16, 185, 129, 0.15)', 
+            borderWidth: 4, 
+            fill: true, 
+            tension: 0.4
+          }, 
+          { 
+            label: 'Failed', 
+            data: monthlyData.failedData, 
+            borderColor: '#EF4444', 
+            backgroundColor: 'rgba(239, 68, 68, 0.15)', 
+            borderWidth: 4, 
+            fill: true, 
+            tension: 0.4
+          }
+        ] 
+      };
+    }
 
   }
 
@@ -328,5 +390,6 @@
       </div>
     </div>
   </div>
+
   {/if}
 </div>
