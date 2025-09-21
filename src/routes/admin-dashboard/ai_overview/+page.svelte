@@ -116,10 +116,10 @@
 	function updateCharts() {
 		// Pass/Fail from reports (status: 1 pass, 0 fail)
 		const passCount = reportData.filter(
-			(r) => r.status === 1 || r.status === '1' || r.status === 'PASS' || r.status === 'Pass'
+			(r) => r.status === 0 || r.status === '0'
 		).length;
 		const failCount = reportData.filter(
-			(r) => r.status === 0 || r.status === '0' || r.status === 'FAIL' || r.status === 'Fail'
+			(r) => r.status === 1 || r.status === '1'
 		).length;
 		const total = passCount + failCount;
 		if (total === 0) {

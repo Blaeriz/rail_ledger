@@ -29,8 +29,38 @@ export const POST: RequestHandler = async ({ request }) => {
 			);
 		}
 
-		// Keep payload compact to avoid token overrun
-		const compactReports = reports.slice(0, 200).map((r: any) => ({
+		// Compute grounded facts to avoid hallucinated counts
+		const normStatus = (s: any) => {
+			if (s === 1 || s === '1' || String(s).toUpperCase() === 'PASS') return 1;
+			if (s === 0 || s === '0' || String(s).toUpperCase() === 'FAIL') return 0;
+			return null;
+		};
+		const totalReports = reports.length;
+		let passCount = 0;
+		let failCount = 0;
+		const issueBins: Record<string, RegExp[]> = {
+			Packaging: [/packag/i, /carton/i, /seal/i, /strap/i],
+			Labeling: [/label/i, /serial/i, /misalign/i],
+			Rust: [/rust/i, /corrosion/i],
+			Cracks: [/crack/i, /fracture/i],
+			Moisture: [/moist/i, /wet/i, /damp/i]
+		};
+		const issueCounts: Record<string, number> = Object.fromEntries(Object.keys(issueBins).map(k => [k, 0]));
+
+		for (const r of reports) {
+			const s = normStatus((r as any).status);
+			if (s === 1) passCount++;
+			else if (s === 0) failCount++;
+			const remark = String((r as any).remark ?? '');
+			for (const [k, patterns] of Object.entries(issueBins)) {
+				if (patterns.some(re => re.test(remark))) issueCounts[k]++;
+			}
+		}
+		const passRate = totalReports ? Math.round((passCount / totalReports) * 100) : 0;
+		const failRate = totalReports ? 100 - passRate : 0;
+
+		// Keep payload compact to avoid token overrun (sample only for context)
+		const compactReports = reports.slice(0, 50).map((r: any) => ({
 			reportId: r.reportId ?? r.report_id ?? undefined,
 			batchId: r.batchId ?? r.batch_id ?? undefined,
 			inspectorName: r.inspectorName ?? r.inspector_name ?? undefined,
@@ -41,7 +71,17 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		const systemPrompt = `You are a senior QA analyst for railway manufacturing. \nProvide an executive summary of inspection reports with:\n- Overall pass rate and failure rate.\n- Top failure reasons or patterns.\n- Notable vendors/batches if issues cluster.\n- Any urgent risks or trends.\nBe concise and action-oriented for management.`;
 
-		const userPrompt = `Here are inspection reports as JSON (truncated to first ${compactReports.length} items):\n\n${JSON.stringify(compactReports)}\n\n${extraContext ? `Additional context: ${extraContext}\n\n` : ''}Return a concise markdown summary (max ~180 words) with bullet points and a brief conclusion.`;
+		const facts = {
+			totalReports,
+			passCount,
+			failCount,
+			passRate,
+			failRate,
+			issueCounts
+		};
+
+	const userPrompt = `Facts (authoritative, use ONLY these for numbers):\n${JSON.stringify(facts, null, 2)}\n\nSample report snippets (for color, NOT for counts): first ${compactReports.length} items\n${JSON.stringify(compactReports)}\n\n${extraContext ? `Additional context: ${extraContext}\n\n` : ''}Instructions:\n- Use only the provided facts for all metrics and counts.\n- Do not infer totals or sample sizes beyond 'facts.totalReports'.\n- If vendor/batch clustering cannot be determined from facts, avoid speculating.\n- Write concise markdown (≤180 words) with bullets and a short conclusion.`;
+
 
 		const combinedText = `${systemPrompt}\n\n${userPrompt}`;
 

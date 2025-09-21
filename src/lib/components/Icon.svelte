@@ -21,7 +21,17 @@
 		plus: `<svg class="${size} ${className}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>`,
 		edit: `<svg class="${size} ${className}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`,
 		trash: `<svg class="${size} ${className}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`,
-		ticket: `<svg class="${size} ${className}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>`
+		ticket: `<svg class="${size} ${className}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>`,
+		robot: `<svg class="${size} ${className}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+			<rect x="7" y="2" width="10" height="6" rx="2" stroke-width="2"></rect>
+			<circle cx="10" cy="5" r="1" stroke-width="2"></circle>
+			<circle cx="14" cy="5" r="1" stroke-width="2"></circle>
+			<rect x="5" y="8" width="14" height="10" rx="2" stroke-width="2"></rect>
+			<line x1="3" y1="12" x2="5" y2="12" stroke-width="2" stroke-linecap="round"></line>
+			<line x1="19" y1="12" x2="21" y2="12" stroke-width="2" stroke-linecap="round"></line>
+			<rect x="9" y="14" width="2" height="4" stroke-width="2"></rect>
+			<rect x="13" y="14" width="2" height="4" stroke-width="2"></rect>
+		</svg>`
 	};
 
 	function getIcon(/** @type {string} */ iconName) {
@@ -58,6 +68,8 @@
 				return icons.trash;
 			case 'ticket':
 				return icons.ticket;
+			case 'robot':
+				return icons.robot;
 			default:
 				return icons.x;
 		}
