@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { fetchData, createItem, updateItem, deleteItem } from '$lib/utils';
-  import { formatDate, getStatusColor } from '$lib/types';
+  import { formatDate } from '$lib/types';
   import DataTable from '$lib/components/DataTable.svelte';
   import Modal from '$lib/components/Modal.svelte';
 
