@@ -17,22 +17,33 @@
 		city: '',
 		state: '',
 		no_of_batches: '',
-		email: ''
+		email: '',
+		gst_no: '',
+		pan_number: '',
+		phone_number: '',
+		audit_date: ''
 	};
 
 	const tableColumns = [
 		{ key: 'vendor_id', label: 'VENDOR ID' },
 		{ key: 'city', label: 'CITY' },
 		{ key: 'state', label: 'STATE' },
-		{ key: 'no_of_batches', label: 'BATCHES' },
 		{ key: 'email', label: 'EMAIL' },
+		{ key: 'phone_number', label: 'PHONE' },
+		{ key: 'no_of_batches', label: 'BATCHES' },
 		{
 			key: 'actions',
 			label: 'ACTIONS',
 			render: (/** @type {any} */ item) => `
         <div class="flex space-x-2">
-          <button onclick="editVendor('${item.vendor_id}')" class="text-white bg-gray-800 hover:bg-gray-700 text-xs sm:text-sm transition-all duration-300 px-3 py-1 rounded border border-purple-500/30 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/20">Edit</button>
-          <button onclick="deleteVendor('${item.vendor_id}')" class="text-white bg-gray-800 hover:bg-gray-700 text-xs sm:text-sm transition-all duration-300 px-3 py-1 rounded border border-red-500/30 hover:border-red-400/50 hover:shadow-lg hover:shadow-red-500/20">Delete</button>
+          <button onclick="editVendor('${item.vendor_id}')" class="group relative flex items-center justify-center space-x-1 overflow-hidden rounded-lg border border-purple-500/30 bg-gray-800 px-3 py-1 text-xs font-medium text-white transition-all duration-500 hover:border-purple-400/50 hover:bg-gray-700 hover:shadow-lg hover:shadow-purple-500/30 active:border-purple-400/60 active:bg-gray-600 active:shadow-xl active:shadow-purple-500/40 sm:text-sm">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+            <span class="relative z-10">Edit</span>
+          </button>
+          <button onclick="deleteVendor('${item.vendor_id}')" class="group relative flex items-center justify-center space-x-1 overflow-hidden rounded-lg border border-red-500/30 bg-gray-800 px-3 py-1 text-xs font-medium text-white transition-all duration-500 hover:border-red-400/50 hover:bg-gray-700 hover:shadow-lg hover:shadow-red-500/30 active:border-red-400/60 active:bg-gray-600 active:shadow-xl active:shadow-red-500/40 sm:text-sm">
+            <div class="absolute inset-0 bg-gradient-to-r from-red-500/10 to-pink-500/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+            <span class="relative z-10">Delete</span>
+          </button>
         </div>
       `
 		}
@@ -66,7 +77,11 @@
 				city: '',
 				state: '',
 				no_of_batches: '',
-				email: ''
+				email: '',
+				gst_no: '',
+				pan_number: '',
+				phone_number: '',
+				audit_date: ''
 			});
 		}
 		showVendorModal = true;
@@ -119,9 +134,27 @@
 		<h1 class="text-2xl font-bold text-white sm:text-3xl lg:text-4xl">Vendor Management</h1>
 		<button
 			on:click={() => openVendorModal()}
-			class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-all duration-300 hover:bg-purple-700 sm:px-6 sm:py-3 sm:text-base"
+			class="group animate-slide-in-left interactive relative flex items-center justify-center space-x-2 overflow-hidden rounded-lg border border-purple-500/30 bg-gray-800 px-6 py-3 text-sm font-medium text-white transition-all duration-500 hover:border-purple-400/50 hover:bg-gray-700 hover:shadow-2xl hover:shadow-purple-500/30 active:border-purple-400/60 active:bg-gray-600 active:shadow-xl active:shadow-purple-500/40"
 		>
-			+ Add Vendor
+			<div
+				class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+			></div>
+			<div class="relative z-10 flex items-center space-x-2">
+				<svg
+					class="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+					></path>
+				</svg>
+				<span class="transition-transform duration-300 group-hover:translate-x-1">+ Add Vendor</span>
+			</div>
 		</button>
 	</div>
 
@@ -187,6 +220,45 @@
 					required
 					class="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none"
 					placeholder="Enter number of batches"
+				/>
+			</div>
+			<div>
+				<label for="gst_no" class="mb-2 block text-sm font-medium text-gray-300">GST Number</label>
+				<input
+					id="gst_no"
+					type="text"
+					bind:value={vendorForm.gst_no}
+					class="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none"
+					placeholder="Enter GST number"
+				/>
+			</div>
+			<div>
+				<label for="pan_number" class="mb-2 block text-sm font-medium text-gray-300">PAN Number</label>
+				<input
+					id="pan_number"
+					type="text"
+					bind:value={vendorForm.pan_number}
+					class="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none"
+					placeholder="Enter PAN number"
+				/>
+			</div>
+			<div>
+				<label for="phone_number" class="mb-2 block text-sm font-medium text-gray-300">Phone Number</label>
+				<input
+					id="phone_number"
+					type="tel"
+					bind:value={vendorForm.phone_number}
+					class="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none"
+					placeholder="Enter phone number"
+				/>
+			</div>
+			<div>
+				<label for="audit_date" class="mb-2 block text-sm font-medium text-gray-300">Audit Date</label>
+				<input
+					id="audit_date"
+					type="date"
+					bind:value={vendorForm.audit_date}
+					class="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none"
 				/>
 			</div>
 			<div class="sm:col-span-2">
