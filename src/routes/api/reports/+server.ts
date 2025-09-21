@@ -1,13 +1,15 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { inspectionReports } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 // ✅ GET all reports
 export const GET: RequestHandler = async () => {
 	try {
 		const reports = await db.select().from(inspectionReports);
-		return new Response(JSON.stringify(reports), { status: 200 });
+		return new Response(JSON.stringify(reports), {
+			status: 200,
+			headers: { 'Cache-Control': 'no-store' }
+		});
 	} catch (err) {
 		console.error('Error fetching reports:', err);
 		return new Response(JSON.stringify({ error: 'Failed to fetch reports' }), { status: 500 });
