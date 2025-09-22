@@ -17,8 +17,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		// Accept common env names to be forgiving
-		const apiKey = env.GEMINI_API_KEY || env.OPENAI_API_KEY || env.GOOGLE_API_KEY;
-		const model = env.GEMINI_MODEL || env.OPENAI_MODEL || 'gemini-1.5-flash';
+		const apiKey = "AIzaSyADQUimTKVwQxSxvOOtW28k_-yMYL_ke5g";
+		const model = 'gemini-1.5-flash';
 
 		if (!apiKey) {
 			return new Response(
