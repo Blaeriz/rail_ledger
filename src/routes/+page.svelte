@@ -149,7 +149,7 @@
 						<button
 							class="w-full rounded-lg border border-purple-500/30 bg-gray-800 px-6 py-3 font-bold text-white transition-all duration-300 hover:border-purple-400/50 hover:bg-gray-700 hover:shadow-lg hover:shadow-purple-500/20 active:border-purple-400/60 active:bg-gray-600 active:shadow-xl active:shadow-purple-500/30"
 						>
-							Access as {role.title}
+							{role.title}
 						</button>
 					</div>
 				</div>
