@@ -4,12 +4,16 @@ use anyhow::Result;
 use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind};
 use crossterm::execute;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
+mod api;
+mod config;
+mod models;
+
 use ratatui::backend::CrosstermBackend;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Borders, Tabs};
+use ratatui::widgets::{Block, Borders, Row, Table, TableState, Tabs};
 use ratatui::Terminal;
 
 #[derive(Copy, Clone, Debug)]
@@ -51,11 +55,20 @@ struct App {
     tab_index: usize,
     running: bool,
     status: String,
+    // Data
+    batches: Vec<models::Batch>,
+    batch_state: TableState,
 }
 
 impl App {
     fn new() -> Self {
-        Self { tab_index: 0, running: true, status: String::from("Press q to quit · Tab/Shift-Tab to switch tabs") }
+        Self {
+            tab_index: 0,
+            running: true,
+            status: String::from("Press q to quit · Tab/Shift-Tab to switch tabs"),
+            batches: Vec::new(),
+            batch_state: TableState::default(),
+        }
     }
 
     fn current_tab(&self) -> Tab {
@@ -63,7 +76,7 @@ impl App {
     }
 }
 
-fn ui(f: &mut Frame, app: &App) {
+fn ui(f: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -86,8 +99,11 @@ fn ui(f: &mut Frame, app: &App) {
 
     f.render_widget(tabs, chunks[0]);
 
-    // Content placeholder
-    draw_content(f, chunks[1], app.current_tab());
+    // Content
+    match app.current_tab() {
+        Tab::Batches => draw_batches_table(f, chunks[1], &app.batches, &mut app.batch_state),
+        other => draw_content(f, chunks[1], other),
+    }
 
     // Status bar
     let status = Block::default().borders(Borders::TOP).title(app.status.as_str());
@@ -111,8 +127,47 @@ fn draw_content(f: &mut Frame, area: Rect, tab: Tab) {
     f.render_widget(block, area);
 }
 
+fn draw_batches_table(f: &mut Frame, area: Rect, items: &[models::Batch], state: &mut TableState) {
+    let header = Row::new(vec!["BATCH ID", "VENDOR", "STATUS", "PROD DATE", "EXPIRY"]) 
+        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+    let rows = items.iter().map(|b| {
+        let prod = b
+            .date_of_production
+            .map(|d| d.format("%Y-%m-%d").to_string())
+            .unwrap_or_else(|| "-".to_string());
+        let exp = b
+            .expiry_date
+            .map(|d| d.format("%Y-%m-%d").to_string())
+            .unwrap_or_else(|| "-".to_string());
+        Row::new(vec![
+            b.batch_id.clone(),
+            b.vendor_id.clone().unwrap_or_else(|| "-".into()),
+            b.qc_status.clone().unwrap_or_else(|| "-".into()),
+            prod,
+            exp,
+        ])
+    });
+
+    let table = Table::new(rows, [
+        Constraint::Length(16),
+        Constraint::Length(12),
+        Constraint::Length(10),
+        Constraint::Length(12),
+        Constraint::Length(12),
+    ])
+    .header(header)
+    .block(Block::default().borders(Borders::ALL).title("Batches"))
+    .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+    .highlight_symbol("> ");
+
+    f.render_stateful_widget(table, area, state);
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Config + API
+    let cfg = config::Config::default();
+    let api = api::Api::new(cfg)?;
     // Terminal setup
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -124,7 +179,7 @@ async fn main() -> Result<()> {
     let mut app = App::new();
 
     // Draw first frame
-    terminal.draw(|f| ui(f, &app))?;
+    terminal.draw(|f| ui(f, &mut app))?;
 
     // Event loop
     loop {
@@ -142,6 +197,69 @@ async fn main() -> Result<()> {
                             // Placeholder for g+key navigation; future implementation
                             app.status = "g- navigation: not yet implemented".into();
                         }
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            if matches!(app.current_tab(), Tab::Batches) {
+                                let len = app.batches.len();
+                                if len > 0 {
+                                    let idx = app.batch_state.selected().unwrap_or(0);
+                                    let new_idx = idx.saturating_sub(1);
+                                    app.batch_state.select(Some(new_idx));
+                                    app.status = format!("Row {}/{}", new_idx + 1, len);
+                                }
+                            }
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            if matches!(app.current_tab(), Tab::Batches) {
+                                let len = app.batches.len();
+                                if len > 0 {
+                                    let idx = app.batch_state.selected().unwrap_or(0);
+                                    let new_idx = (idx + 1).min(len.saturating_sub(1));
+                                    app.batch_state.select(Some(new_idx));
+                                    app.status = format!("Row {}/{}", new_idx + 1, len);
+                                }
+                            }
+                        }
+                        KeyCode::PageUp => {
+                            if matches!(app.current_tab(), Tab::Batches) {
+                                let len = app.batches.len();
+                                if len > 0 {
+                                    let idx = app.batch_state.selected().unwrap_or(0);
+                                    let new_idx = idx.saturating_sub(10);
+                                    app.batch_state.select(Some(new_idx));
+                                    app.status = format!("Row {}/{}", new_idx + 1, len);
+                                }
+                            }
+                        }
+                        KeyCode::PageDown => {
+                            if matches!(app.current_tab(), Tab::Batches) {
+                                let len = app.batches.len();
+                                if len > 0 {
+                                    let idx = app.batch_state.selected().unwrap_or(0);
+                                    let new_idx = (idx + 10).min(len.saturating_sub(1));
+                                    app.batch_state.select(Some(new_idx));
+                                    app.status = format!("Row {}/{}", new_idx + 1, len);
+                                }
+                            }
+                        }
+                        KeyCode::Home => {
+                            if matches!(app.current_tab(), Tab::Batches) {
+                                let len = app.batches.len();
+                                if len > 0 {
+                                    app.batch_state.select(Some(0));
+                                    app.status = format!("Row {}/{}", 1, len);
+                                }
+                            }
+                        }
+                        KeyCode::End => {
+                            if matches!(app.current_tab(), Tab::Batches) {
+                                let len = app.batches.len();
+                                if len > 0 {
+                                    let last = len - 1;
+                                    app.batch_state.select(Some(last));
+                                    app.status = format!("Row {}/{}", last + 1, len);
+                                }
+                            }
+                        }
                         _ => {}
                     }
                 }
@@ -150,7 +268,23 @@ async fn main() -> Result<()> {
 
         if !app.running { break; }
 
-        terminal.draw(|f| ui(f, &app))?;
+        // Refresh batches periodically while on Batches tab
+        if matches!(app.current_tab(), Tab::Batches) && app.batches.is_empty() {
+            match api.batches().await {
+                Ok(items) => {
+                    app.batches = items;
+                    if !app.batches.is_empty() {
+                        app.batch_state.select(Some(0));
+                    }
+                    app.status = format!("Loaded {} batches", app.batches.len());
+                }
+                Err(e) => {
+                    app.status = format!("Error loading batches: {}", e);
+                }
+            }
+        }
+
+        terminal.draw(|f| ui(f, &mut app))?;
     }
 
     // Restore terminal
