@@ -17,10 +17,27 @@ pub struct Batch {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Report {
-    pub reportId: i32,
-    pub batchId: String,
-    pub inspectorName: String,
+    #[serde(rename = "reportId")]
+    pub report_id: i32,
+    #[serde(rename = "batchId")]
+    pub batch_id: String,
+    #[serde(rename = "inspectorName")]
+    pub inspector_name: String,
     pub remark: Option<String>,
     pub status: Option<i32>,
-    pub createdAt: Option<DateTime<Utc>>, // string in API; chrono with serde feature handles RFC3339
+    #[serde(rename = "createdAt")]
+    pub created_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Vendor {
+    pub vendor_id: String,
+    pub no_of_batches: Option<i32>,
+    pub gst_no: Option<String>,
+    pub pan_number: Option<String>,
+    pub city: Option<String>,
+    pub state: Option<String>,
+    pub phone_number: Option<String>,
+    pub email: Option<String>,
+    pub audit_date: Option<NaiveDate>,
 }

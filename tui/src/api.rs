@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::models::Batch;
+use crate::models::{Batch, Report, Vendor};
 use anyhow::{Context, Result};
 use reqwest::Client;
 
@@ -26,6 +26,30 @@ impl Api {
             anyhow::bail!("/api/batches error {}: {}", code, body);
         }
         let items: Vec<Batch> = resp.json().await.context("parse /api/batches json")?;
+        Ok(items)
+    }
+
+    pub async fn vendors(&self) -> Result<Vec<Vendor>> {
+        let url = format!("{}/api/vendors", self.cfg.base_url);
+        let resp = self.client.get(url).send().await.context("GET /api/vendors")?;
+        if !resp.status().is_success() {
+            let code = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            anyhow::bail!("/api/vendors error {}: {}", code, body);
+        }
+        let items: Vec<Vendor> = resp.json().await.context("parse /api/vendors json")?;
+        Ok(items)
+    }
+
+    pub async fn reports(&self) -> Result<Vec<Report>> {
+        let url = format!("{}/api/reports", self.cfg.base_url);
+        let resp = self.client.get(url).send().await.context("GET /api/reports")?;
+        if !resp.status().is_success() {
+            let code = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            anyhow::bail!("/api/reports error {}: {}", code, body);
+        }
+        let items: Vec<Report> = resp.json().await.context("parse /api/reports json")?;
         Ok(items)
     }
 }

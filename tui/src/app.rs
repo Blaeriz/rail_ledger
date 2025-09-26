@@ -2,6 +2,8 @@ use ratatui::widgets::TableState;
 
 use crate::models;
 
+pub const PAGE_SIZE: usize = 50;
+
 #[derive(Copy, Clone, Debug)]
 pub enum Tab {
     Overview,
@@ -44,6 +46,13 @@ pub struct App {
     // Data
     pub batches: Vec<models::Batch>,
     pub batch_state: TableState,
+    pub batch_page: usize,
+    pub vendors: Vec<models::Vendor>,
+    pub vendor_state: TableState,
+    pub vendor_page: usize,
+    pub reports: Vec<models::Report>,
+    pub report_state: TableState,
+    pub report_page: usize,
 }
 
 impl App {
@@ -54,6 +63,13 @@ impl App {
             status: String::from("Press q to quit · Tab/Shift-Tab to switch tabs"),
             batches: Vec::new(),
             batch_state: TableState::default(),
+            batch_page: 0,
+            vendors: Vec::new(),
+            vendor_state: TableState::default(),
+            vendor_page: 0,
+            reports: Vec::new(),
+            report_state: TableState::default(),
+            report_page: 0,
         }
     }
 

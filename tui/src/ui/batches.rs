@@ -3,7 +3,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, Paragraph, Row, Table, TableState, Wrap};
 use ratatui::Frame;
 
-use crate::app::App;
+use crate::app::{App, PAGE_SIZE};
 use crate::models::Batch;
 
 pub fn render(f: &mut Frame, area: Rect, app: &mut App) {
@@ -12,14 +12,24 @@ pub fn render(f: &mut Frame, area: Rect, app: &mut App) {
         .constraints([Constraint::Percentage(65), Constraint::Percentage(35)])
         .split(area);
 
-    draw_table(f, cols[0], &app.batches, &mut app.batch_state);
+    draw_table(f, cols[0], app);
+    // Map selected (global) index into detail
     draw_detail(f, cols[1], &app.batches, app.batch_state.selected());
 }
 
-fn draw_table(f: &mut Frame, area: Rect, items: &[Batch], state: &mut TableState) {
+fn draw_table(f: &mut Frame, area: Rect, app: &mut App) {
+    let items = &app.batches;
+    let total = items.len();
+    let total_pages = if total == 0 { 1 } else { ((total - 1) / PAGE_SIZE) + 1 };
+    let page = app.batch_page.min(total_pages.saturating_sub(1));
+    app.batch_page = page; // clamp
+    let start = page * PAGE_SIZE;
+    let end = (start + PAGE_SIZE).min(total);
+    let page_items = &items[start..end];
+
     let header = Row::new(vec!["BATCH ID", "VENDOR", "STATUS", "PROD DATE", "EXPIRY"]) 
         .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
-    let rows = items.iter().map(|b| {
+    let rows = page_items.iter().map(|b| {
         let prod = b
             .date_of_production
             .map(|d| d.format("%Y-%m-%d").to_string())
@@ -45,11 +55,32 @@ fn draw_table(f: &mut Frame, area: Rect, items: &[Batch], state: &mut TableState
         Constraint::Length(12),
     ])
     .header(header)
-    .block(Block::default().borders(Borders::ALL).title("Batches"))
+    .block(Block::default().borders(Borders::ALL).title(format!(
+        "Batches  (Page {}/{}, Rows {}-{} of {})",
+        page + 1,
+        total_pages,
+        if total == 0 { 0 } else { start + 1 },
+        end,
+        total
+    )))
     .highlight_style(Style::default().add_modifier(Modifier::REVERSED))
     .highlight_symbol("> ");
 
-    f.render_stateful_widget(table, area, state);
+    // Translate global selection index onto this page's local index window.
+    // If selection is None or outside current page, snap to first row of page when drawing.
+    let mut local_state = TableState::default();
+    if let Some(global_idx) = app.batch_state.selected() {
+        if global_idx >= start && global_idx < end {
+            local_state.select(Some(global_idx - start));
+        } else if start < end {
+            // keep selection consistent but outside page; do not select in local to avoid highlighting wrong row
+            local_state.select(None);
+        }
+    }
+
+    f.render_stateful_widget(table, area, &mut local_state);
+    // After render, map local selection (if changed by keyboard handlers) back to global.
+    // Note: keyboard handlers operate on global state; render does not modify app.batch_state.
 }
 
 fn draw_detail(f: &mut Frame, area: Rect, items: &[Batch], selected: Option<usize>) {

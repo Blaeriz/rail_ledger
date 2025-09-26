@@ -13,7 +13,7 @@ mod ui;
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 
-use app::{App, Tab};
+use app::{App, Tab, PAGE_SIZE};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -50,66 +50,265 @@ async fn main() -> Result<()> {
                             app.status = "g- navigation: not yet implemented".into();
                         }
                         KeyCode::Up | KeyCode::Char('k') => {
-                            if matches!(app.current_tab(), Tab::Batches) {
-                                let len = app.batches.len();
-                                if len > 0 {
-                                    let idx = app.batch_state.selected().unwrap_or(0);
-                                    let new_idx = idx.saturating_sub(1);
-                                    app.batch_state.select(Some(new_idx));
-                                    app.status = format!("Row {}/{}", new_idx + 1, len);
+                            match app.current_tab() {
+                                Tab::Batches => {
+                                    let len = app.batches.len();
+                                    if len > 0 {
+                                        let idx = app.batch_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(1);
+                                        app.batch_state.select(Some(new_idx));
+                                        app.batch_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
                                 }
+                                Tab::Vendors => {
+                                    let len = app.vendors.len();
+                                    if len > 0 {
+                                        let idx = app.vendor_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(1);
+                                        app.vendor_state.select(Some(new_idx));
+                                        app.vendor_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Reports => {
+                                    let len = app.reports.len();
+                                    if len > 0 {
+                                        let idx = app.report_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(1);
+                                        app.report_state.select(Some(new_idx));
+                                        app.report_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                         KeyCode::Down | KeyCode::Char('j') => {
-                            if matches!(app.current_tab(), Tab::Batches) {
-                                let len = app.batches.len();
-                                if len > 0 {
-                                    let idx = app.batch_state.selected().unwrap_or(0);
-                                    let new_idx = (idx + 1).min(len.saturating_sub(1));
-                                    app.batch_state.select(Some(new_idx));
-                                    app.status = format!("Row {}/{}", new_idx + 1, len);
+                            match app.current_tab() {
+                                Tab::Batches => {
+                                    let len = app.batches.len();
+                                    if len > 0 {
+                                        let idx = app.batch_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 1).min(len.saturating_sub(1));
+                                        app.batch_state.select(Some(new_idx));
+                                        app.batch_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
                                 }
+                                Tab::Vendors => {
+                                    let len = app.vendors.len();
+                                    if len > 0 {
+                                        let idx = app.vendor_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 1).min(len.saturating_sub(1));
+                                        app.vendor_state.select(Some(new_idx));
+                                        app.vendor_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Reports => {
+                                    let len = app.reports.len();
+                                    if len > 0 {
+                                        let idx = app.report_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 1).min(len.saturating_sub(1));
+                                        app.report_state.select(Some(new_idx));
+                                        app.report_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                         KeyCode::PageUp => {
-                            if matches!(app.current_tab(), Tab::Batches) {
-                                let len = app.batches.len();
-                                if len > 0 {
-                                    let idx = app.batch_state.selected().unwrap_or(0);
-                                    let new_idx = idx.saturating_sub(10);
-                                    app.batch_state.select(Some(new_idx));
-                                    app.status = format!("Row {}/{}", new_idx + 1, len);
+                            match app.current_tab() {
+                                Tab::Batches => {
+                                    let len = app.batches.len();
+                                    if len > 0 {
+                                        let idx = app.batch_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(10);
+                                        app.batch_state.select(Some(new_idx));
+                                        app.batch_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
                                 }
+                                Tab::Vendors => {
+                                    let len = app.vendors.len();
+                                    if len > 0 {
+                                        let idx = app.vendor_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(10);
+                                        app.vendor_state.select(Some(new_idx));
+                                        app.vendor_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Reports => {
+                                    let len = app.reports.len();
+                                    if len > 0 {
+                                        let idx = app.report_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(10);
+                                        app.report_state.select(Some(new_idx));
+                                        app.report_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                         KeyCode::PageDown => {
-                            if matches!(app.current_tab(), Tab::Batches) {
-                                let len = app.batches.len();
-                                if len > 0 {
-                                    let idx = app.batch_state.selected().unwrap_or(0);
-                                    let new_idx = (idx + 10).min(len.saturating_sub(1));
-                                    app.batch_state.select(Some(new_idx));
-                                    app.status = format!("Row {}/{}", new_idx + 1, len);
+                            match app.current_tab() {
+                                Tab::Batches => {
+                                    let len = app.batches.len();
+                                    if len > 0 {
+                                        let idx = app.batch_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 10).min(len.saturating_sub(1));
+                                        app.batch_state.select(Some(new_idx));
+                                        app.batch_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
                                 }
+                                Tab::Vendors => {
+                                    let len = app.vendors.len();
+                                    if len > 0 {
+                                        let idx = app.vendor_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 10).min(len.saturating_sub(1));
+                                        app.vendor_state.select(Some(new_idx));
+                                        app.vendor_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Reports => {
+                                    let len = app.reports.len();
+                                    if len > 0 {
+                                        let idx = app.report_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 10).min(len.saturating_sub(1));
+                                        app.report_state.select(Some(new_idx));
+                                        app.report_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        KeyCode::Left | KeyCode::Char('h') => {
+                            match app.current_tab() {
+                                Tab::Batches => {
+                                    let len = app.batches.len();
+                                    if len > 0 {
+                                        if app.batch_page > 0 {
+                                            app.batch_page -= 1;
+                                            let new_idx = app.batch_page * PAGE_SIZE;
+                                            let new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.batch_state.select(Some(new_idx));
+                                            let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.batch_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
+                                Tab::Vendors => {
+                                    let len = app.vendors.len();
+                                    if len > 0 {
+                                        if app.vendor_page > 0 {
+                                            app.vendor_page -= 1;
+                                            let new_idx = app.vendor_page * PAGE_SIZE;
+                                            let new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.vendor_state.select(Some(new_idx));
+                                            let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.vendor_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
+                                Tab::Reports => {
+                                    let len = app.reports.len();
+                                    if len > 0 {
+                                        if app.report_page > 0 {
+                                            app.report_page -= 1;
+                                            let new_idx = app.report_page * PAGE_SIZE;
+                                            let new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.report_state.select(Some(new_idx));
+                                            let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.report_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        KeyCode::Right | KeyCode::Char('l') => {
+                            match app.current_tab() {
+                                Tab::Batches => {
+                                    let len = app.batches.len();
+                                    if len > 0 {
+                                        let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                        if app.batch_page + 1 < total_pages {
+                                            app.batch_page += 1;
+                                            let mut new_idx = app.batch_page * PAGE_SIZE;
+                                            new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.batch_state.select(Some(new_idx));
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.batch_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
+                                Tab::Vendors => {
+                                    let len = app.vendors.len();
+                                    if len > 0 {
+                                        let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                        if app.vendor_page + 1 < total_pages {
+                                            app.vendor_page += 1;
+                                            let mut new_idx = app.vendor_page * PAGE_SIZE;
+                                            new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.vendor_state.select(Some(new_idx));
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.vendor_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
+                                Tab::Reports => {
+                                    let len = app.reports.len();
+                                    if len > 0 {
+                                        let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                        if app.report_page + 1 < total_pages {
+                                            app.report_page += 1;
+                                            let mut new_idx = app.report_page * PAGE_SIZE;
+                                            new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.report_state.select(Some(new_idx));
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.report_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                         KeyCode::Home => {
-                            if matches!(app.current_tab(), Tab::Batches) {
-                                let len = app.batches.len();
-                                if len > 0 {
-                                    app.batch_state.select(Some(0));
-                                    app.status = format!("Row {}/{}", 1, len);
+                            match app.current_tab() {
+                                Tab::Batches => {
+                                    let len = app.batches.len();
+                                    if len > 0 { app.batch_state.select(Some(0)); app.batch_page = 0; app.status = format!("Row {}/{}", 1, len); }
                                 }
+                                Tab::Vendors => {
+                                    let len = app.vendors.len();
+                                    if len > 0 { app.vendor_state.select(Some(0)); app.vendor_page = 0; app.status = format!("Row {}/{}", 1, len); }
+                                }
+                                Tab::Reports => {
+                                    let len = app.reports.len();
+                                    if len > 0 { app.report_state.select(Some(0)); app.report_page = 0; app.status = format!("Row {}/{}", 1, len); }
+                                }
+                                _ => {}
                             }
                         }
                         KeyCode::End => {
-                            if matches!(app.current_tab(), Tab::Batches) {
-                                let len = app.batches.len();
-                                if len > 0 {
-                                    let last = len - 1;
-                                    app.batch_state.select(Some(last));
-                                    app.status = format!("Row {}/{}", last + 1, len);
+                            match app.current_tab() {
+                                Tab::Batches => {
+                                    let len = app.batches.len();
+                                    if len > 0 { let last = len - 1; app.batch_state.select(Some(last)); app.batch_page = last / PAGE_SIZE; app.status = format!("Row {}/{}", last + 1, len); }
                                 }
+                                Tab::Vendors => {
+                                    let len = app.vendors.len();
+                                    if len > 0 { let last = len - 1; app.vendor_state.select(Some(last)); app.vendor_page = last / PAGE_SIZE; app.status = format!("Row {}/{}", last + 1, len); }
+                                }
+                                Tab::Reports => {
+                                    let len = app.reports.len();
+                                    if len > 0 { let last = len - 1; app.report_state.select(Some(last)); app.report_page = last / PAGE_SIZE; app.status = format!("Row {}/{}", last + 1, len); }
+                                }
+                                _ => {}
                             }
                         }
                         _ => {}
@@ -120,19 +319,40 @@ async fn main() -> Result<()> {
 
         if !app.running { break; }
 
-        // Refresh batches periodically while on Batches tab
+        // Lazy-load per tab (can be extended to timed refresh later)
         if matches!(app.current_tab(), Tab::Batches) && app.batches.is_empty() {
             match api.batches().await {
                 Ok(items) => {
                     app.batches = items;
                     if !app.batches.is_empty() {
                         app.batch_state.select(Some(0));
+                        app.batch_page = 0;
                     }
                     app.status = format!("Loaded {} batches", app.batches.len());
                 }
                 Err(e) => {
                     app.status = format!("Error loading batches: {}", e);
                 }
+            }
+        }
+        if matches!(app.current_tab(), Tab::Vendors) && app.vendors.is_empty() {
+            match api.vendors().await {
+                Ok(items) => {
+                    app.vendors = items;
+                    if !app.vendors.is_empty() { app.vendor_state.select(Some(0)); app.vendor_page = 0; }
+                    app.status = format!("Loaded {} vendors", app.vendors.len());
+                }
+                Err(e) => { app.status = format!("Error loading vendors: {}", e); }
+            }
+        }
+        if matches!(app.current_tab(), Tab::Reports) && app.reports.is_empty() {
+            match api.reports().await {
+                Ok(items) => {
+                    app.reports = items;
+                    if !app.reports.is_empty() { app.report_state.select(Some(0)); app.report_page = 0; }
+                    app.status = format!("Loaded {} reports", app.reports.len());
+                }
+                Err(e) => { app.status = format!("Error loading reports: {}", e); }
             }
         }
 
