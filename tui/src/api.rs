@@ -76,4 +76,22 @@ impl Api {
         let items: Vec<Ticket> = resp.json().await.context("parse /api/tickets json")?;
         Ok(items)
     }
+
+    pub async fn batch_by_qr_hash(&self, qr_hash: &str) -> Result<Batch> {
+        let url = format!("{}/api/batches/qr_hash", self.cfg.base_url);
+        let resp = self
+            .client
+            .get(url)
+            .query(&[("qr_hash", qr_hash)])
+            .send()
+            .await
+            .context("GET /api/batches/qr_hash")?;
+        if !resp.status().is_success() {
+            let code = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            anyhow::bail!("/api/batches/qr_hash error {}: {}", code, body);
+        }
+        let item: Batch = resp.json().await.context("parse /api/batches/qr_hash json")?;
+        Ok(item)
+    }
 }

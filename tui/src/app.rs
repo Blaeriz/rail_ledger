@@ -60,6 +60,11 @@ pub struct App {
     pub tickets: Vec<models::Ticket>,
     pub ticket_state: TableState,
     pub ticket_page: usize,
+    // QR search
+    pub qr_input: String,
+    pub qr_input_focused: bool,
+    pub qr_result: Option<models::Batch>,
+    pub qr_error: Option<String>,
 }
 
 impl App {
@@ -84,6 +89,10 @@ impl App {
             tickets: Vec::new(),
             ticket_state: TableState::default(),
             ticket_page: 0,
+            qr_input: String::new(),
+            qr_input_focused: true,
+            qr_result: None,
+            qr_error: None,
         }
     }
 
