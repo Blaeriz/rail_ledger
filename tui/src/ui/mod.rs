@@ -2,6 +2,8 @@ pub mod batches;
 pub mod vendors;
 pub mod reports;
 pub mod overview;
+pub mod users;
+pub mod tickets;
 
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Modifier, Style};
@@ -34,15 +36,20 @@ pub fn render(f: &mut Frame, app: &mut App) {
 
     // Main content by tab
     match app.current_tab() {
-        Tab::Overview => overview::render(f, chunks[1], app),
+    Tab::Overview => overview::render(f, chunks[1], app),
         Tab::Batches => batches::render(f, chunks[1], app),
         Tab::Vendors => vendors::render(f, chunks[1], app),
         Tab::Reports => reports::render(f, chunks[1], app),
+        Tab::Users => users::render(f, chunks[1], app),
+        Tab::Tickets => tickets::render(f, chunks[1], app),
         other => draw_placeholder(f, chunks[1], other),
     }
 
-    // Status bar
-    let status = Block::default().borders(Borders::TOP).title(app.status.as_str());
+    // Status bar with mini legend
+    let legend = "Keys: q quit · Tab/Shift-Tab switch · ↑/↓ move · PgUp/PgDn jump · ←/→ page · Home/End first/last";
+    let status = Block::default()
+        .borders(Borders::TOP)
+        .title(format!("{}  ||  {}", legend, app.status));
     f.render_widget(status, chunks[2]);
 }
 

@@ -4,6 +4,7 @@ use ratatui::widgets::{Block, Borders, Paragraph, Row, Table, Wrap};
 use ratatui::Frame;
 
 use crate::app::App;
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 pub fn render(f: &mut Frame, area: Rect, app: &mut App) {
     let rows = Layout::default()
@@ -32,10 +33,15 @@ fn draw_stats(f: &mut Frame, area: Rect, app: &App) {
 fn draw_recent_reports(f: &mut Frame, area: Rect, app: &App) {
     let header = Row::new(vec!["ID", "BATCH", "INSPECTOR", "STATUS", "CREATED"]) 
         .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
-    // Take first 10 reports as a simple "recent" list (backend not sorted here)
-    let rows = app
-        .reports
-        .iter()
+    // Sort by created_at desc using robust parsing; fall back to original order
+    let mut items: Vec<_> = app.reports.iter().collect();
+    items.sort_by(|a, b| {
+        let ad = parse_created_at(a.created_at.as_deref());
+        let bd = parse_created_at(b.created_at.as_deref());
+        bd.cmp(&ad) // desc
+    });
+    let rows = items
+        .into_iter()
         .take(10)
         .map(|r| Row::new(vec![
             r.report_id.to_string(),
@@ -57,4 +63,21 @@ fn draw_recent_reports(f: &mut Frame, area: Rect, app: &App) {
     .highlight_style(Style::default().add_modifier(Modifier::REVERSED));
 
     f.render_widget(table, area);
+}
+
+fn parse_created_at(s: Option<&str>) -> Option<DateTime<Utc>> {
+    let s = s?;
+    // Try RFC3339 first
+    if let Ok(dt) = DateTime::parse_from_rfc3339(s) {
+        return Some(dt.with_timezone(&Utc));
+    }
+    // Common fallback: "YYYY-mm-dd HH:MM:SS"
+    if let Ok(ndt) = NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S") {
+        return Some(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc));
+    }
+    // Another common: without seconds fraction but with T
+    if let Ok(ndt) = NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S") {
+        return Some(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc));
+    }
+    None
 }

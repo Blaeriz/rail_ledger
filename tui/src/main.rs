@@ -19,6 +19,7 @@ use app::{App, Tab, PAGE_SIZE};
 async fn main() -> Result<()> {
     // Config + API
     let cfg = config::Config::default();
+    let refresh_interval = cfg.refresh_interval; // capture for periodic refresh
     let api = api::Api::new(cfg)?;
     // Terminal setup
     enable_raw_mode()?;
@@ -81,6 +82,26 @@ async fn main() -> Result<()> {
                                         app.status = format!("Row {}/{}", new_idx + 1, len);
                                     }
                                 }
+                                Tab::Users => {
+                                    let len = app.users.len();
+                                    if len > 0 {
+                                        let idx = app.user_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(1);
+                                        app.user_state.select(Some(new_idx));
+                                        app.user_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Tickets => {
+                                    let len = app.tickets.len();
+                                    if len > 0 {
+                                        let idx = app.ticket_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(1);
+                                        app.ticket_state.select(Some(new_idx));
+                                        app.ticket_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
                                 _ => {}
                             }
                         }
@@ -113,6 +134,26 @@ async fn main() -> Result<()> {
                                         let new_idx = (idx + 1).min(len.saturating_sub(1));
                                         app.report_state.select(Some(new_idx));
                                         app.report_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Users => {
+                                    let len = app.users.len();
+                                    if len > 0 {
+                                        let idx = app.user_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 1).min(len.saturating_sub(1));
+                                        app.user_state.select(Some(new_idx));
+                                        app.user_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Tickets => {
+                                    let len = app.tickets.len();
+                                    if len > 0 {
+                                        let idx = app.ticket_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 1).min(len.saturating_sub(1));
+                                        app.ticket_state.select(Some(new_idx));
+                                        app.ticket_page = new_idx / PAGE_SIZE;
                                         app.status = format!("Row {}/{}", new_idx + 1, len);
                                     }
                                 }
@@ -151,6 +192,26 @@ async fn main() -> Result<()> {
                                         app.status = format!("Row {}/{}", new_idx + 1, len);
                                     }
                                 }
+                                Tab::Users => {
+                                    let len = app.users.len();
+                                    if len > 0 {
+                                        let idx = app.user_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(10);
+                                        app.user_state.select(Some(new_idx));
+                                        app.user_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Tickets => {
+                                    let len = app.tickets.len();
+                                    if len > 0 {
+                                        let idx = app.ticket_state.selected().unwrap_or(0);
+                                        let new_idx = idx.saturating_sub(10);
+                                        app.ticket_state.select(Some(new_idx));
+                                        app.ticket_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
                                 _ => {}
                             }
                         }
@@ -183,6 +244,26 @@ async fn main() -> Result<()> {
                                         let new_idx = (idx + 10).min(len.saturating_sub(1));
                                         app.report_state.select(Some(new_idx));
                                         app.report_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Users => {
+                                    let len = app.users.len();
+                                    if len > 0 {
+                                        let idx = app.user_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 10).min(len.saturating_sub(1));
+                                        app.user_state.select(Some(new_idx));
+                                        app.user_page = new_idx / PAGE_SIZE;
+                                        app.status = format!("Row {}/{}", new_idx + 1, len);
+                                    }
+                                }
+                                Tab::Tickets => {
+                                    let len = app.tickets.len();
+                                    if len > 0 {
+                                        let idx = app.ticket_state.selected().unwrap_or(0);
+                                        let new_idx = (idx + 10).min(len.saturating_sub(1));
+                                        app.ticket_state.select(Some(new_idx));
+                                        app.ticket_page = new_idx / PAGE_SIZE;
                                         app.status = format!("Row {}/{}", new_idx + 1, len);
                                     }
                                 }
@@ -230,6 +311,32 @@ async fn main() -> Result<()> {
                                         }
                                     }
                                 }
+                                Tab::Users => {
+                                    let len = app.users.len();
+                                    if len > 0 {
+                                        if app.user_page > 0 {
+                                            app.user_page -= 1;
+                                            let new_idx = app.user_page * PAGE_SIZE;
+                                            let new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.user_state.select(Some(new_idx));
+                                            let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.user_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
+                                Tab::Tickets => {
+                                    let len = app.tickets.len();
+                                    if len > 0 {
+                                        if app.ticket_page > 0 {
+                                            app.ticket_page -= 1;
+                                            let new_idx = app.ticket_page * PAGE_SIZE;
+                                            let new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.ticket_state.select(Some(new_idx));
+                                            let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.ticket_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
                                 _ => {}
                             }
                         }
@@ -274,6 +381,32 @@ async fn main() -> Result<()> {
                                         }
                                     }
                                 }
+                                Tab::Users => {
+                                    let len = app.users.len();
+                                    if len > 0 {
+                                        let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                        if app.user_page + 1 < total_pages {
+                                            app.user_page += 1;
+                                            let mut new_idx = app.user_page * PAGE_SIZE;
+                                            new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.user_state.select(Some(new_idx));
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.user_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
+                                Tab::Tickets => {
+                                    let len = app.tickets.len();
+                                    if len > 0 {
+                                        let total_pages = ((len.saturating_sub(1)) / PAGE_SIZE) + 1;
+                                        if app.ticket_page + 1 < total_pages {
+                                            app.ticket_page += 1;
+                                            let mut new_idx = app.ticket_page * PAGE_SIZE;
+                                            new_idx = new_idx.min(len.saturating_sub(1));
+                                            app.ticket_state.select(Some(new_idx));
+                                            app.status = format!("Page {}/{} · Row {}/{}", app.ticket_page + 1, total_pages, new_idx + 1, len);
+                                        }
+                                    }
+                                }
                                 _ => {}
                             }
                         }
@@ -290,6 +423,14 @@ async fn main() -> Result<()> {
                                 Tab::Reports => {
                                     let len = app.reports.len();
                                     if len > 0 { app.report_state.select(Some(0)); app.report_page = 0; app.status = format!("Row {}/{}", 1, len); }
+                                }
+                                Tab::Users => {
+                                    let len = app.users.len();
+                                    if len > 0 { app.user_state.select(Some(0)); app.user_page = 0; app.status = format!("Row {}/{}", 1, len); }
+                                }
+                                Tab::Tickets => {
+                                    let len = app.tickets.len();
+                                    if len > 0 { app.ticket_state.select(Some(0)); app.ticket_page = 0; app.status = format!("Row {}/{}", 1, len); }
                                 }
                                 _ => {}
                             }
@@ -308,6 +449,14 @@ async fn main() -> Result<()> {
                                     let len = app.reports.len();
                                     if len > 0 { let last = len - 1; app.report_state.select(Some(last)); app.report_page = last / PAGE_SIZE; app.status = format!("Row {}/{}", last + 1, len); }
                                 }
+                                Tab::Users => {
+                                    let len = app.users.len();
+                                    if len > 0 { let last = len - 1; app.user_state.select(Some(last)); app.user_page = last / PAGE_SIZE; app.status = format!("Row {}/{}", last + 1, len); }
+                                }
+                                Tab::Tickets => {
+                                    let len = app.tickets.len();
+                                    if len > 0 { let last = len - 1; app.ticket_state.select(Some(last)); app.ticket_page = last / PAGE_SIZE; app.status = format!("Row {}/{}", last + 1, len); }
+                                }
                                 _ => {}
                             }
                         }
@@ -320,7 +469,7 @@ async fn main() -> Result<()> {
         if !app.running { break; }
 
         // Lazy-load per tab (can be extended to timed refresh later)
-        // Lazy-load per tab (can be extended to timed refresh later)
+    // Lazy-load per tab and periodic refresh
         if matches!(app.current_tab(), Tab::Overview) {
             // For overview, try to have vendors and reports for stats and recent list
             if app.vendors.is_empty() {
@@ -387,6 +536,145 @@ async fn main() -> Result<()> {
                     app.status = format!("Loaded {} reports", app.reports.len());
                 }
                 Err(e) => { app.status = format!("Error loading reports: {}", e); }
+            }
+        }
+        if matches!(app.current_tab(), Tab::Users) && app.users.is_empty() {
+            match api.users().await {
+                Ok(items) => {
+                    app.users = items;
+                    if !app.users.is_empty() { app.user_state.select(Some(0)); app.user_page = 0; }
+                    app.status = format!("Loaded {} users", app.users.len());
+                }
+                Err(e) => { app.status = format!("Error loading users: {}", e); }
+            }
+        }
+        if matches!(app.current_tab(), Tab::Tickets) && app.tickets.is_empty() {
+            match api.tickets().await {
+                Ok(items) => {
+                    app.tickets = items;
+                    if !app.tickets.is_empty() { app.ticket_state.select(Some(0)); app.ticket_page = 0; }
+                    app.status = format!("Loaded {} tickets", app.tickets.len());
+                }
+                Err(e) => { app.status = format!("Error loading tickets: {}", e); }
+            }
+        }
+
+        // Periodic refresh of the active tab list only
+        let now = std::time::Instant::now();
+    if now.duration_since(app.last_refresh) >= refresh_interval {
+            match app.current_tab() {
+                Tab::Batches => {
+                    if let Ok(items) = api.batches().await {
+                        let prev_len = app.batches.len();
+                        app.batches = items;
+                        if app.batches.is_empty() {
+                            app.batch_state.select(None);
+                            app.batch_page = 0;
+                        } else if app.batch_state.selected().is_none() {
+                            app.batch_state.select(Some(0));
+                            app.batch_page = 0;
+                        } else {
+                            // keep selection in range
+                            let sel = app.batch_state.selected().unwrap();
+                            let new_sel = sel.min(app.batches.len().saturating_sub(1));
+                            app.batch_state.select(Some(new_sel));
+                            app.batch_page = new_sel / PAGE_SIZE;
+                        }
+                        if app.batches.len() != prev_len {
+                            app.status = format!("Refreshed batches: {} items", app.batches.len());
+                        }
+                    }
+                    app.last_refresh = now;
+                }
+                Tab::Vendors => {
+                    if let Ok(items) = api.vendors().await {
+                        let prev_len = app.vendors.len();
+                        app.vendors = items;
+                        if app.vendors.is_empty() {
+                            app.vendor_state.select(None);
+                            app.vendor_page = 0;
+                        } else if app.vendor_state.selected().is_none() {
+                            app.vendor_state.select(Some(0));
+                            app.vendor_page = 0;
+                        } else {
+                            let sel = app.vendor_state.selected().unwrap();
+                            let new_sel = sel.min(app.vendors.len().saturating_sub(1));
+                            app.vendor_state.select(Some(new_sel));
+                            app.vendor_page = new_sel / PAGE_SIZE;
+                        }
+                        if app.vendors.len() != prev_len {
+                            app.status = format!("Refreshed vendors: {} items", app.vendors.len());
+                        }
+                    }
+                    app.last_refresh = now;
+                }
+                Tab::Reports => {
+                    if let Ok(items) = api.reports().await {
+                        let prev_len = app.reports.len();
+                        app.reports = items;
+                        if app.reports.is_empty() {
+                            app.report_state.select(None);
+                            app.report_page = 0;
+                        } else if app.report_state.selected().is_none() {
+                            app.report_state.select(Some(0));
+                            app.report_page = 0;
+                        } else {
+                            let sel = app.report_state.selected().unwrap();
+                            let new_sel = sel.min(app.reports.len().saturating_sub(1));
+                            app.report_state.select(Some(new_sel));
+                            app.report_page = new_sel / PAGE_SIZE;
+                        }
+                        if app.reports.len() != prev_len {
+                            app.status = format!("Refreshed reports: {} items", app.reports.len());
+                        }
+                    }
+                    app.last_refresh = now;
+                }
+                Tab::Users => {
+                    if let Ok(items) = api.users().await {
+                        let prev_len = app.users.len();
+                        app.users = items;
+                        if app.users.is_empty() {
+                            app.user_state.select(None);
+                            app.user_page = 0;
+                        } else if app.user_state.selected().is_none() {
+                            app.user_state.select(Some(0));
+                            app.user_page = 0;
+                        } else {
+                            let sel = app.user_state.selected().unwrap();
+                            let new_sel = sel.min(app.users.len().saturating_sub(1));
+                            app.user_state.select(Some(new_sel));
+                            app.user_page = new_sel / PAGE_SIZE;
+                        }
+                        if app.users.len() != prev_len {
+                            app.status = format!("Refreshed users: {} items", app.users.len());
+                        }
+                    }
+                    app.last_refresh = now;
+                }
+                Tab::Tickets => {
+                    if let Ok(items) = api.tickets().await {
+                        let prev_len = app.tickets.len();
+                        app.tickets = items;
+                        if app.tickets.is_empty() {
+                            app.ticket_state.select(None);
+                            app.ticket_page = 0;
+                        } else if app.ticket_state.selected().is_none() {
+                            app.ticket_state.select(Some(0));
+                            app.ticket_page = 0;
+                        } else {
+                            let sel = app.ticket_state.selected().unwrap();
+                            let new_sel = sel.min(app.tickets.len().saturating_sub(1));
+                            app.ticket_state.select(Some(new_sel));
+                            app.ticket_page = new_sel / PAGE_SIZE;
+                        }
+                        if app.tickets.len() != prev_len {
+                            app.status = format!("Refreshed tickets: {} items", app.tickets.len());
+                        }
+                    }
+                    app.last_refresh = now;
+                }
+                _ => {}
             }
         }
 

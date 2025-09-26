@@ -43,6 +43,7 @@ pub struct App {
     pub tab_index: usize,
     pub running: bool,
     pub status: String,
+    pub last_refresh: std::time::Instant,
     // Data
     pub batches: Vec<models::Batch>,
     pub batch_state: TableState,
@@ -53,6 +54,12 @@ pub struct App {
     pub reports: Vec<models::Report>,
     pub report_state: TableState,
     pub report_page: usize,
+    pub users: Vec<models::User>,
+    pub user_state: TableState,
+    pub user_page: usize,
+    pub tickets: Vec<models::Ticket>,
+    pub ticket_state: TableState,
+    pub ticket_page: usize,
 }
 
 impl App {
@@ -61,6 +68,7 @@ impl App {
             tab_index: 0,
             running: true,
             status: String::from("Press q to quit · Tab/Shift-Tab to switch tabs"),
+            last_refresh: std::time::Instant::now(),
             batches: Vec::new(),
             batch_state: TableState::default(),
             batch_page: 0,
@@ -70,6 +78,12 @@ impl App {
             reports: Vec::new(),
             report_state: TableState::default(),
             report_page: 0,
+            users: Vec::new(),
+            user_state: TableState::default(),
+            user_page: 0,
+            tickets: Vec::new(),
+            ticket_state: TableState::default(),
+            ticket_page: 0,
         }
     }
 
