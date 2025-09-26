@@ -1,4 +1,6 @@
 pub mod batches;
+pub mod vendors;
+pub mod reports;
 
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Modifier, Style};
@@ -32,6 +34,8 @@ pub fn render(f: &mut Frame, app: &mut App) {
     // Main content by tab
     match app.current_tab() {
         Tab::Batches => batches::render(f, chunks[1], app),
+        Tab::Vendors => vendors::render(f, chunks[1], app),
+        Tab::Reports => reports::render(f, chunks[1], app),
         other => draw_placeholder(f, chunks[1], other),
     }
 
