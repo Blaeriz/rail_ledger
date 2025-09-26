@@ -1,55 +1,75 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { db } from '$lib/db';
+import { inspectionReports, batch_info, vendor_info } from '$lib/server/db/schema';
+import { sql, eq } from 'drizzle-orm';
 
-// Sample data for Indian states with pending inspections
-const sampleHeatmapData = [
-	{ id: 'MH', state: 'Maharashtra', pendingInspections: 45 },
-	{ id: 'UP', state: 'Uttar Pradesh', pendingInspections: 38 },
-	{ id: 'WB', state: 'West Bengal', pendingInspections: 32 },
-	{ id: 'TN', state: 'Tamil Nadu', pendingInspections: 28 },
-	{ id: 'GJ', state: 'Gujarat', pendingInspections: 25 },
-	{ id: 'KA', state: 'Karnataka', pendingInspections: 22 },
-	{ id: 'RJ', state: 'Rajasthan', pendingInspections: 20 },
-	{ id: 'MP', state: 'Madhya Pradesh', pendingInspections: 18 },
-	{ id: 'AP', state: 'Andhra Pradesh', pendingInspections: 16 },
-	{ id: 'KL', state: 'Kerala', pendingInspections: 14 },
-	{ id: 'PB', state: 'Punjab', pendingInspections: 12 },
-	{ id: 'HR', state: 'Haryana', pendingInspections: 10 },
-	{ id: 'BR', state: 'Bihar', pendingInspections: 8 },
-	{ id: 'OR', state: 'Odisha', pendingInspections: 6 },
-	{ id: 'AS', state: 'Assam', pendingInspections: 4 },
-	{ id: 'JH', state: 'Jharkhand', pendingInspections: 3 },
-	{ id: 'CT', state: 'Chhattisgarh', pendingInspections: 2 },
-	{ id: 'HP', state: 'Himachal Pradesh', pendingInspections: 1 }
-];
+const STATE_TO_ID: Record<string, string> = {
+	'Andhra Pradesh': 'AP',
+	'Arunachal Pradesh': 'AR',
+	'Assam': 'AS',
+	'Bihar': 'BR',
+	'Chhattisgarh': 'CT',
+	'Gujarat': 'GJ',
+	'Haryana': 'HR',
+	'Himachal Pradesh': 'HP',
+	'Jharkhand': 'JH',
+	'Karnataka': 'KA',
+	'Kerala': 'KL',
+	'Madhya Pradesh': 'MP',
+	'Maharashtra': 'MH',
+	'Odisha': 'OR',
+	'Punjab': 'PB',
+	'Rajasthan': 'RJ',
+	'Tamil Nadu': 'TN',
+	'Uttar Pradesh': 'UP',
+	'West Bengal': 'WB',
+	'Andaman & Nicobar Island': 'AN',
+	'Delhi': 'DL',
+	'Goa': 'GA',
+	'Jammu & Kashmir': 'JK',
+	'Ladakh': 'LA',
+	'Lakshadweep': 'LD',
+	'Manipur': 'MN',
+	'Meghalaya': 'ML',
+	'Mizoram': 'MZ',
+	'Nagaland': 'NL',
+	'Puducherry': 'PY',
+	'Sikkim': 'SK',
+	'Tripura': 'TR',
+	'Uttarakhand': 'UT'
+};
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async () => {
 	try {
-		// In a real application, you would fetch this data from your database
-		// For now, we'll return sample data with some randomization to simulate real data
-		const randomizedData = sampleHeatmapData.map(item => ({
-			...item,
-			pendingInspections: Math.max(0, item.pendingInspections + Math.floor(Math.random() * 10) - 5)
-		}));
+		const rows = await db
+			.select({
+				state: vendor_info.state,
+				count: sql<number>`COUNT(*)`
+			})
+			.from(inspectionReports)
+			.leftJoin(batch_info, eq(inspectionReports.batchId, batch_info.batch_id))
+			.leftJoin(vendor_info, eq(batch_info.vendor_id, vendor_info.vendor_id))
+			.where(eq(inspectionReports.status, 1))
+			.groupBy(vendor_info.state);
 
-		// Sort by pending inspections (descending)
-		randomizedData.sort((a, b) => b.pendingInspections - a.pendingInspections);
+		const data = rows
+			.filter(r => r.state)
+			.map(r => ({
+				id: STATE_TO_ID[r.state as string] ?? r.state,
+				state: r.state as string,
+				pendingInspections: Number(r.count)
+			}))
+			.sort((a, b) => b.pendingInspections - a.pendingInspections);
 
 		return json({
 			success: true,
-			data: randomizedData,
-			totalPending: randomizedData.reduce((sum, item) => sum + item.pendingInspections, 0),
+			data,
+			totalPending: data.reduce((sum, item) => sum + item.pendingInspections, 0),
 			lastUpdated: new Date().toISOString()
 		});
 	} catch (error) {
 		console.error('Error fetching heatmap data:', error);
-		return json(
-			{
-				success: false,
-				error: 'Failed to fetch heatmap data',
-				data: sampleHeatmapData
-			},
-			{ status: 500 }
-		);
+		return json({ success: false, error: 'Failed to fetch heatmap data' }, { status: 500 });
 	}
 };

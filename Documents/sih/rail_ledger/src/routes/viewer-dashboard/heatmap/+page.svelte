@@ -1,61 +1,37 @@
 <!-- @ts-nocheck -->
-<script>
+<script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import IndiaMap from '$lib/components/IndiaMap.svelte';
 
-	let heatmapData = [];
+	let heatmapData: { id: string; state: string; pendingInspections: number }[] = [];
 	let isLoading = true;
-	let error = null;
+	let error: string | null = null;
 	let tooltipContent = '';
 	let tooltipVisible = false;
 	let tooltipX = 0;
 	let tooltipY = 0;
 
 	// Sample data for Indian states with pending inspections
-	const sampleData = [
-		{ id: 'MH', state: 'Maharashtra', pendingInspections: 45 },
-		{ id: 'UP', state: 'Uttar Pradesh', pendingInspections: 38 },
-		{ id: 'WB', state: 'West Bengal', pendingInspections: 32 },
-		{ id: 'TN', state: 'Tamil Nadu', pendingInspections: 28 },
-		{ id: 'GJ', state: 'Gujarat', pendingInspections: 25 },
-		{ id: 'KA', state: 'Karnataka', pendingInspections: 22 },
-		{ id: 'RJ', state: 'Rajasthan', pendingInspections: 20 },
-		{ id: 'MP', state: 'Madhya Pradesh', pendingInspections: 18 },
-		{ id: 'AP', state: 'Andhra Pradesh', pendingInspections: 16 },
-		{ id: 'KL', state: 'Kerala', pendingInspections: 14 },
-		{ id: 'PB', state: 'Punjab', pendingInspections: 12 },
-		{ id: 'HR', state: 'Haryana', pendingInspections: 10 },
-		{ id: 'BR', state: 'Bihar', pendingInspections: 8 },
-		{ id: 'OR', state: 'Odisha', pendingInspections: 6 },
-		{ id: 'AS', state: 'Assam', pendingInspections: 4 },
-		{ id: 'JH', state: 'Jharkhand', pendingInspections: 3 },
-		{ id: 'CT', state: 'Chhattisgarh', pendingInspections: 2 },
-		{ id: 'HP', state: 'Himachal Pradesh', pendingInspections: 1 }
-	];
+	const sampleData: { id: string; state: string; pendingInspections: number }[] = [];
 
 	onMount(async () => {
 		try {
-			// Try to fetch real data from API
-			const response = await fetch('/api/heatmap/pending-inspections');
-			if (response.ok) {
-				const result = await response.json();
-				heatmapData = result.data || result;
-			} else {
-				// Fallback to sample data
-				heatmapData = sampleData;
-			}
+			const response = await fetch('/api/heatmap/pending-inspections', { cache: 'no-store' });
+			if (!response.ok) throw new Error('Failed to fetch');
+			const result = await response.json();
+			heatmapData = result.data || [];
 		} catch (err) {
 			console.error('Error fetching data:', err);
-			heatmapData = sampleData;
-			error = 'Failed to load data, showing sample data';
+			heatmapData = [];
+			error = 'Failed to load heatmap data from API';
 		} finally {
 			isLoading = false;
 		}
 	});
 
 	// Color scale for heatmap intensity
-	function getColor(intensity) {
+	function getColor(intensity: number) {
 		if (intensity >= 40) return '#ef4444'; // Red for high
 		if (intensity >= 30) return '#f97316'; // Orange
 		if (intensity >= 20) return '#eab308'; // Yellow
@@ -64,14 +40,14 @@
 	}
 
 	// Event handlers for map interactions
-	function handleMapMouseEnter(event) {
+	function handleMapMouseEnter(event: any) {
 		tooltipContent = `${event.detail.state}: ${event.detail.pendingInspections} pending inspections`;
 		tooltipVisible = true;
 		tooltipX = event.detail.x;
 		tooltipY = event.detail.y;
 	}
 
-	function handleMapMouseMove(event) {
+	function handleMapMouseMove(event: any) {
 		tooltipX = event.detail.x;
 		tooltipY = event.detail.y;
 	}
