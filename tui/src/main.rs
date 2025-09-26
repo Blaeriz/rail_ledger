@@ -50,6 +50,30 @@ async fn main() -> Result<()> {
                             // Placeholder for g+key navigation; future implementation
                             app.status = "g- navigation: not yet implemented".into();
                         }
+                        KeyCode::Char('i') => {
+                            if matches!(app.current_tab(), Tab::QR) {
+                                app.qr_input_focused = true;
+                                app.status = "QR input focused".into();
+                            }
+                        }
+                        KeyCode::Esc => {
+                            if matches!(app.current_tab(), Tab::QR) {
+                                app.qr_input.clear();
+                                app.qr_result = None;
+                                app.qr_error = None;
+                                app.qr_input_focused = true;
+                                app.status = "Cleared QR search".into();
+                            }
+                        }
+                        KeyCode::Enter => {
+                            if matches!(app.current_tab(), Tab::QR) && !app.qr_input.trim().is_empty() {
+                                let query = app.qr_input.trim().to_string();
+                                match api.batch_by_qr_hash(&query).await {
+                                    Ok(batch) => { app.qr_result = Some(batch); app.qr_error = None; app.status = "QR match loaded".into(); }
+                                    Err(e) => { app.qr_result = None; app.qr_error = Some(format!("{}", e)); app.status = "QR lookup failed".into(); }
+                                }
+                            }
+                        }
                         KeyCode::Up | KeyCode::Char('k') => {
                             match app.current_tab() {
                                 Tab::Batches => {
@@ -460,7 +484,16 @@ async fn main() -> Result<()> {
                                 _ => {}
                             }
                         }
-                        _ => {}
+                        _ => {
+                            // Text input for QR tab when focused
+                            if matches!(app.current_tab(), Tab::QR) && app.qr_input_focused {
+                                match key.code {
+                                    KeyCode::Char(c) => { app.qr_input.push(c); }
+                                    KeyCode::Backspace => { app.qr_input.pop(); }
+                                    _ => {}
+                                }
+                            }
+                        }
                     }
                 }
             }
