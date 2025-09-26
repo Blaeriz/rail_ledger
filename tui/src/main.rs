@@ -320,6 +320,40 @@ async fn main() -> Result<()> {
         if !app.running { break; }
 
         // Lazy-load per tab (can be extended to timed refresh later)
+        // Lazy-load per tab (can be extended to timed refresh later)
+        if matches!(app.current_tab(), Tab::Overview) {
+            // For overview, try to have vendors and reports for stats and recent list
+            if app.vendors.is_empty() {
+                match api.vendors().await {
+                    Ok(items) => {
+                        app.vendors = items;
+                        if !app.vendors.is_empty() { app.vendor_state.select(Some(0)); app.vendor_page = 0; }
+                        app.status = format!("Loaded {} vendors", app.vendors.len());
+                    }
+                    Err(e) => { app.status = format!("Error loading vendors: {}", e); }
+                }
+            }
+            if app.reports.is_empty() {
+                match api.reports().await {
+                    Ok(items) => {
+                        app.reports = items;
+                        if !app.reports.is_empty() { app.report_state.select(Some(0)); app.report_page = 0; }
+                        app.status = format!("Loaded {} reports", app.reports.len());
+                    }
+                    Err(e) => { app.status = format!("Error loading reports: {}", e); }
+                }
+            }
+            if app.batches.is_empty() {
+                match api.batches().await {
+                    Ok(items) => {
+                        app.batches = items;
+                        if !app.batches.is_empty() { app.batch_state.select(Some(0)); app.batch_page = 0; }
+                        app.status = format!("Loaded {} batches", app.batches.len());
+                    }
+                    Err(e) => { app.status = format!("Error loading batches: {}", e); }
+                }
+            }
+        }
         if matches!(app.current_tab(), Tab::Batches) && app.batches.is_empty() {
             match api.batches().await {
                 Ok(items) => {
