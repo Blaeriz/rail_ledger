@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::models::{Batch, Report, Vendor};
+use crate::models::{Batch, Report, Vendor, User, Ticket};
 use anyhow::{Context, Result};
 use reqwest::Client;
 
@@ -50,6 +50,30 @@ impl Api {
             anyhow::bail!("/api/reports error {}: {}", code, body);
         }
         let items: Vec<Report> = resp.json().await.context("parse /api/reports json")?;
+        Ok(items)
+    }
+
+    pub async fn users(&self) -> Result<Vec<User>> {
+        let url = format!("{}/api/users", self.cfg.base_url);
+        let resp = self.client.get(url).send().await.context("GET /api/users")?;
+        if !resp.status().is_success() {
+            let code = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            anyhow::bail!("/api/users error {}: {}", code, body);
+        }
+        let items: Vec<User> = resp.json().await.context("parse /api/users json")?;
+        Ok(items)
+    }
+
+    pub async fn tickets(&self) -> Result<Vec<Ticket>> {
+        let url = format!("{}/api/tickets", self.cfg.base_url);
+        let resp = self.client.get(url).send().await.context("GET /api/tickets")?;
+        if !resp.status().is_success() {
+            let code = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            anyhow::bail!("/api/tickets error {}: {}", code, body);
+        }
+        let items: Vec<Ticket> = resp.json().await.context("parse /api/tickets json")?;
         Ok(items)
     }
 }

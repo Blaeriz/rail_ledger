@@ -41,3 +41,29 @@ pub struct Vendor {
     pub email: Option<String>,
     pub audit_date: Option<NaiveDate>,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct User {
+    pub user_id: String,
+    pub aadhar: Option<String>,
+    pub phone_number: Option<String>,
+    pub name: Option<String>,
+    pub user_role: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct Ticket {
+    pub ticket_id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub priority: Option<String>,
+    pub status: Option<String>,
+    pub category: Option<String>,
+    pub created_by: Option<String>,
+    pub assigned_to: Option<String>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+    pub resolved_at: Option<String>,
+    pub resolution_notes: Option<String>,
+    pub attachments: Option<Vec<String>>,
+}
