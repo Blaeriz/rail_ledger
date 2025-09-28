@@ -1,19 +1,25 @@
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
-use ratatui::widgets::{Block, Borders, Paragraph, Row, Table, Wrap};
+use ratatui::style::{Color, Style, Stylize};
+use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use ratatui::Frame;
+use ratatui::widgets::{Axis, Chart, Dataset, GraphType, LegendPosition};
+use ratatui::symbols;
+use ratatui::text::Line as TuiLine;
 
 use crate::app::App;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{Local, TimeDelta};
 
 pub fn render(f: &mut Frame, area: Rect, app: &mut App) {
     let rows = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(7), Constraint::Min(1)])
+        .constraints([
+            Constraint::Length(7),
+            Constraint::Min(10),
+        ])
         .split(area);
 
     draw_stats(f, rows[0], app);
-    draw_recent_reports(f, rows[1], app);
+    draw_live_metrics_chart(f, rows[1], app);
 }
 
 fn draw_stats(f: &mut Frame, area: Rect, app: &App) {
@@ -30,54 +36,87 @@ fn draw_stats(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(p, area);
 }
 
-fn draw_recent_reports(f: &mut Frame, area: Rect, app: &App) {
-    let header = Row::new(vec!["ID", "BATCH", "INSPECTOR", "STATUS", "CREATED"]) 
-        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
-    // Sort by created_at desc using robust parsing; fall back to original order
-    let mut items: Vec<_> = app.reports.iter().collect();
-    items.sort_by(|a, b| {
-        let ad = parse_created_at(a.created_at.as_deref());
-        let bd = parse_created_at(b.created_at.as_deref());
-        bd.cmp(&ad) // desc
-    });
-    let rows = items
-        .into_iter()
-        .take(10)
-        .map(|r| Row::new(vec![
-            r.report_id.to_string(),
-            r.batch_id.clone(),
-            r.inspector_name.clone(),
-            r.status.map(|s| s.to_string()).unwrap_or_else(|| "-".into()),
-            r.created_at.clone().unwrap_or_else(|| "-".into()),
-        ]));
+// Live metrics chart
 
-    let table = Table::new(rows, [
-        Constraint::Length(6),
-        Constraint::Length(16),
-        Constraint::Length(18),
-        Constraint::Length(8),
-        Constraint::Length(26),
-    ])
-    .header(header)
-    .block(Block::default().borders(Borders::ALL).title("Recent Reports (first 10)"))
-    .highlight_style(Style::default().add_modifier(Modifier::REVERSED));
+fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
+    // Build datasets: one per endpoint with counts per minute bucket across the selected window
+    let mut datasets: Vec<Dataset> = Vec::new();
+    let mut max_x = 1.0f64;
+    let mut max_y = 1.0f64;
+    let minutes = app.metrics_scale.to_minutes().max(1);
 
-    f.render_widget(table, area);
-}
+    // Build the minute keys for the window [now - minutes + 1 .. now]
+    let now = Local::now();
+    let mut minute_keys: Vec<String> = Vec::with_capacity(minutes as usize);
+    for i in (0..minutes).rev() {
+        let dt = now - TimeDelta::minutes(i as i64);
+        minute_keys.push(dt.format("%d%m%y%H%M").to_string());
+    }
 
-fn parse_created_at(s: Option<&str>) -> Option<DateTime<Utc>> {
-    let s = s?;
-    // Try RFC3339 first
-    if let Ok(dt) = DateTime::parse_from_rfc3339(s) {
-        return Some(dt.with_timezone(&Utc));
+    let mut series_storage: Vec<(String, Vec<(f64, f64)>)> = Vec::new();
+    for (route, entry) in &app.live_metrics {
+        use std::collections::HashMap;
+        let mut freq: HashMap<&str, u32> = HashMap::new();
+        for ts in &entry.timestamps {
+            *freq.entry(ts.as_str()).or_insert(0) += 1;
+        }
+        let mut points: Vec<(f64, f64)> = Vec::with_capacity(minute_keys.len());
+        for (idx, key) in minute_keys.iter().enumerate() {
+            let y = *freq.get(key.as_str()).unwrap_or(&0) as f64;
+            points.push((idx as f64, y));
+        }
+        if !points.is_empty() {
+            max_x = f64::max(max_x, points.last().unwrap().0);
+            let local_max_y = points.iter().fold(0.0f64, |m, &(_, y)| f64::max(m, y));
+            max_y = max_y.max(local_max_y);
+            series_storage.push((route.clone(), points));
+        }
     }
-    // Common fallback: "YYYY-mm-dd HH:MM:SS"
-    if let Ok(ndt) = NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S") {
-        return Some(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc));
+
+    for (route, points) in &series_storage {
+        let ds = Dataset::default()
+            .name(route.clone())
+            .marker(symbols::Marker::Braille)
+            .style(Style::default().fg(Color::Yellow))
+            .graph_type(GraphType::Line)
+            .data(points);
+        datasets.push(ds);
     }
-    // Another common: without seconds fraction but with T
-    if let Ok(ndt) = NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S") {
-        return Some(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc));
+
+    if datasets.is_empty() {
+        let p = Paragraph::new("No live metrics yet…")
+            .block(Block::default().borders(Borders::ALL).title("Live API metrics"));
+        f.render_widget(p, area);
+        return;
     }
-    None
+
+    let chart = Chart::new(datasets)
+        .block(
+            Block::bordered().title(
+                TuiLine::from(format!(
+                    "API requests (per {}) — endpoints",
+                    app.metrics_scale.label()
+                ))
+                .cyan()
+                .bold()
+                .centered(),
+            ),
+        )
+        .x_axis(
+            Axis::default()
+                .title("time buckets")
+                .style(Style::default().fg(Color::Gray))
+                .bounds([0.0, (max_x + 1.0).max(5.0)])
+                .labels(vec!["0".bold(), "".into(), format!("{:.0}", max_x.max(1.0)).bold().into()]),
+        )
+        .y_axis(
+            Axis::default()
+                .title("requests")
+                .style(Style::default().fg(Color::Gray))
+                .bounds([0.0, (max_y + 1.0).max(5.0)])
+                .labels(vec!["0".bold(), "".into(), format!("{:.0}", max_y.max(1.0)).bold().into()]),
+        )
+        .legend_position(Some(LegendPosition::TopLeft));
+
+    f.render_widget(chart, area);
 }
