@@ -2,8 +2,10 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import { fetchData, calculateSummaryStats } from '$lib/utils';
 	import Chart from '$lib/components/Chart.svelte';
+	import IndiaMap from '$lib/components/IndiaMap.svelte';
 
 	let user = /** @type {any} */ (null);
 	let vendorData = /** @type {any[]} */ ([]);
@@ -11,6 +13,13 @@
 	let reportData = /** @type {any[]} */ ([]);
 	let summaryStats = { totalVendors: 0, totalBatches: 0, pendingInspections: 0, failedBatches: 0 };
 	let isLoading = true;
+
+	// Heatmap data
+	let heatmapData = /** @type {any[]} */ ([]);
+	let tooltipContent = '';
+	let tooltipVisible = false;
+	let tooltipX = 0;
+	let tooltipY = 0;
 
 	// Chart data
 	let qualityChartData = {
@@ -70,14 +79,16 @@
 		user = JSON.parse(userData);
 
 		try {
-			const [vendors, batches, reports] = await Promise.all([
+			const [vendors, batches, reports, heatmap] = await Promise.all([
 				fetchData('/api/vendors'),
 				fetchData('/api/batches'),
-				fetchData('/api/reports')
+				fetchData('/api/reports'),
+				fetchData('/api/heatmap/pending-inspections')
 			]);
 			vendorData = vendors || [];
 			batchData = batches || [];
 			reportData = reports || [];
+			heatmapData = (heatmap && heatmap.data) ? heatmap.data : [];
 
 			// Calculate summary stats with proper data handling
 			summaryStats = {
@@ -351,6 +362,23 @@
 
 		return { labels: months, passedData, failedData };
 	}
+
+	// Heatmap event handlers
+	function handleMapMouseEnter(event) {
+		tooltipContent = `${event.detail.state}: ${event.detail.pendingInspections} pending inspections`;
+		tooltipVisible = true;
+		tooltipX = event.detail.x;
+		tooltipY = event.detail.y;
+	}
+
+	function handleMapMouseMove(event) {
+		tooltipX = event.detail.x;
+		tooltipY = event.detail.y;
+	}
+
+	function handleMapMouseLeave() {
+		tooltipVisible = false;
+	}
 </script>
 
 <div class="p-6">
@@ -464,43 +492,48 @@
 	{:else}
 		<!-- Charts Section -->
 		<div class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-			<!-- Quality Status Distribution -->
+			<!-- Pending Inspections Heatmap -->
 			<div
 				class="min-h-[400px] overflow-hidden rounded-lg border border-gray-700 bg-black p-6 lg:min-h-[500px]"
 			>
 				<h3 class="mb-4 text-lg font-bold text-white sm:mb-6 sm:text-xl">
-					Quality Status Distribution
+					Pending Inspections Heatmap
 				</h3>
 				<div class="h-72 w-full overflow-hidden sm:h-80 lg:h-96">
 					<div class="h-full w-full">
-						<Chart
-							type="doughnut"
-							data={qualityChartData}
-							options={{
-								responsive: true,
-								maintainAspectRatio: false,
-								plugins: {
-									legend: {
-										position: 'bottom',
-										labels: {
-											color: '#D1D5DB',
-											font: { size: 12, weight: 'bold' },
-											padding: 20,
-											usePointStyle: true
-										}
-									},
-									tooltip: {
-										backgroundColor: 'rgba(0, 0, 0, 0.8)',
-										titleColor: '#FFFFFF',
-										bodyColor: '#D1D5DB',
-										borderColor: '#374151',
-										borderWidth: 1,
-										cornerRadius: 8
-									}
-								},
-								cutout: '60%'
-							}}
+						<IndiaMap 
+							data={heatmapData}
+							width={600}
+							height={400}
+							on:mouseenter={handleMapMouseEnter}
+							on:mousemove={handleMapMouseMove}
+							on:mouseleave={handleMapMouseLeave}
 						/>
+					</div>
+				</div>
+				
+				<!-- Color Legend -->
+				<div class="mt-4 flex flex-wrap items-center justify-center gap-4">
+					<span class="text-sm font-medium text-gray-300">Inspection Density:</span>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #6b7280;"></div>
+						<span class="text-xs text-gray-400">Low (0-9)</span>
+					</div>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #22c55e;"></div>
+						<span class="text-xs text-gray-400">Medium (10-19)</span>
+					</div>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #eab308;"></div>
+						<span class="text-xs text-gray-400">High (20-29)</span>
+					</div>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #f97316;"></div>
+						<span class="text-xs text-gray-400">Very High (30-39)</span>
+					</div>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #ef4444;"></div>
+						<span class="text-xs text-gray-400">Critical (40+)</span>
 					</div>
 				</div>
 			</div>
@@ -604,6 +637,59 @@
 					</div>
 				</div>
 			</div>
+		</div>
+
+		<!-- Quality Status Distribution - Moved Below -->
+		<div class="mb-8">
+			<div
+				class="min-h-[400px] overflow-hidden rounded-lg border border-gray-700 bg-black p-6 lg:min-h-[500px]"
+			>
+				<h3 class="mb-4 text-lg font-bold text-white sm:mb-6 sm:text-xl">
+					Quality Status Distribution
+				</h3>
+				<div class="h-72 w-full overflow-hidden sm:h-80 lg:h-96">
+					<div class="h-full w-full">
+						<Chart
+							type="doughnut"
+							data={qualityChartData}
+							options={{
+								responsive: true,
+								maintainAspectRatio: false,
+								plugins: {
+									legend: {
+										position: 'bottom',
+										labels: {
+											color: '#D1D5DB',
+											font: { size: 12, weight: 'bold' },
+											padding: 20,
+											usePointStyle: true
+										}
+									},
+									tooltip: {
+										backgroundColor: 'rgba(0, 0, 0, 0.8)',
+										titleColor: '#FFFFFF',
+										bodyColor: '#D1D5DB',
+										borderColor: '#374151',
+										borderWidth: 1,
+										cornerRadius: 8
+									}
+								},
+								cutout: '60%'
+							}}
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	<!-- Tooltip -->
+	{#if tooltipVisible && browser}
+		<div
+			class="fixed z-50 rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white shadow-lg pointer-events-none"
+			style="left: {tooltipX - 60}px; top: {tooltipY - 40}px; transform: translate(-50%, -100%);"
+		>
+			{tooltipContent}
 		</div>
 	{/if}
 </div>

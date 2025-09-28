@@ -101,6 +101,31 @@
 						India - Pending Inspections Heatmap
 					</h2>
 				</div>
+				
+				<!-- Color Legend -->
+				<div class="mt-6 flex flex-wrap items-center justify-center gap-4">
+					<span class="text-sm font-medium text-gray-300">Inspection Density:</span>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #6b7280;"></div>
+						<span class="text-xs text-gray-400">Low (0-9)</span>
+					</div>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #22c55e;"></div>
+						<span class="text-xs text-gray-400">Medium (10-19)</span>
+					</div>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #eab308;"></div>
+						<span class="text-xs text-gray-400">High (20-29)</span>
+					</div>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #f97316;"></div>
+						<span class="text-xs text-gray-400">Very High (30-39)</span>
+					</div>
+					<div class="flex items-center space-x-2">
+						<div class="h-4 w-4 rounded" style="background-color: #ef4444;"></div>
+						<span class="text-xs text-gray-400">Critical (40+)</span>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -154,8 +179,8 @@
 	<!-- Tooltip -->
 	{#if tooltipVisible && browser}
 		<div
-			class="fixed z-50 rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white shadow-lg"
-			style="left: {tooltipX + 10}px; top: {tooltipY - 10}px; pointer-events: none;"
+			class="fixed z-50 rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white shadow-lg pointer-events-none"
+			style="left: {tooltipX - 60}px; top: {tooltipY - 40}px; transform: translate(-50%, -100%);"
 		>
 			{tooltipContent}
 		</div>
