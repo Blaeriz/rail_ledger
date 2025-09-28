@@ -7,11 +7,11 @@ import { logEvent } from '$lib/eventLog';
 export const GET: RequestHandler = async () => {
 	try {
 		const result = await db.select().from(user_info);
-		logEvent('/api/users', 'success'); // ✅ Track successful fetch
+		logEvent('/api/users', 'GET', 'success'); // ✅ Track successful fetch
 		return new Response(JSON.stringify(result), { status: 200 });
 	} catch (err) {
 		console.error('Error fetching users:', err);
-		logEvent('/api/users', 'error'); // ✅ Track failure
+		logEvent('/api/users', 'GET', 'error'); // ✅ Track failure
 		return new Response(JSON.stringify({ error: 'Failed to fetch users' }), { status: 500 });
 	}
 };
@@ -27,11 +27,11 @@ export const POST: RequestHandler = async ({ request }) => {
 			name: data.name,
 			user_role: data.user_role
 		});
-		logEvent('/api/users', 'success'); // ✅ Track successful insert
+		logEvent('/api/users', 'POST', 'success'); // ✅ Track successful insert
 		return new Response(JSON.stringify({ message: 'User added successfully' }), { status: 201 });
 	} catch (err) {
 		console.error('Error adding user:', err);
-		logEvent('/api/users', 'error'); // ✅ Track failure
+		logEvent('/api/users', 'POST', 'error'); // ✅ Track failure
 		return new Response(JSON.stringify({ error: 'Failed to add user' }), { status: 500 });
 	}
 };
