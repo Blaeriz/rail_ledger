@@ -53,7 +53,7 @@ fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
         minute_keys.push(dt.format("%d%m%y%H%M").to_string());
     }
 
-    let mut series_storage: Vec<(String, Vec<(f64, f64)>)> = Vec::new();
+    let mut series_storage: Vec<(String, String, Vec<(f64, f64)>)> = Vec::new();
     for (route, entry) in &app.live_metrics {
         use std::collections::HashMap;
         let mut freq: HashMap<&str, u32> = HashMap::new();
@@ -69,15 +69,19 @@ fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
             max_x = f64::max(max_x, points.last().unwrap().0);
             let local_max_y = points.iter().fold(0.0f64, |m, &(_, y)| f64::max(m, y));
             max_y = max_y.max(local_max_y);
-            series_storage.push((route.clone(), points));
+            series_storage.push((route.clone(), entry.method.clone(), points));
         }
     }
 
-    for (route, points) in &series_storage {
+    // Sort for stable ordering across renders
+    series_storage.sort_by(|a, b| a.0.cmp(&b.0));
+
+    for (route, method, points) in &series_storage {
+        let color = color_for_route(route);
         let ds = Dataset::default()
-            .name(route.clone())
+            .name(format!("{} {}", method, route))
             .marker(symbols::Marker::Braille)
-            .style(Style::default().fg(Color::Yellow))
+            .style(Style::default().fg(color))
             .graph_type(GraphType::Line)
             .data(points);
         datasets.push(ds);
@@ -89,6 +93,12 @@ fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
         f.render_widget(p, area);
         return;
     }
+
+    // Round max_y up to nearest 10 and build y-axis labels at steps of 10
+    let max_y_u = max_y.ceil() as u32;
+    let mut y_upper = if max_y_u == 0 { 10 } else { ((max_y_u + 9) / 10) * 10 };
+    if y_upper < 10 { y_upper = 10; }
+    let y_labels: Vec<_> = (0..=y_upper).step_by(10).map(|n| n.to_string().into()).collect();
 
     let chart = Chart::new(datasets)
         .block(
@@ -113,10 +123,31 @@ fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
             Axis::default()
                 .title("requests")
                 .style(Style::default().fg(Color::Gray))
-                .bounds([0.0, (max_y + 1.0).max(5.0)])
-                .labels(vec!["0".bold(), "".into(), format!("{:.0}", max_y.max(1.0)).bold().into()]),
+                .bounds([0.0, y_upper as f64])
+                .labels(y_labels),
         )
         .legend_position(Some(LegendPosition::TopLeft));
 
     f.render_widget(chart, area);
+}
+
+fn color_for_route(route: &str) -> Color {
+    // Deterministic color from a small, high-contrast palette
+    const PALETTE: [Color; 12] = [
+        Color::Red,
+        Color::Green,
+        Color::Yellow,
+        Color::Blue,
+        Color::Magenta,
+        Color::Cyan,
+        Color::LightRed,
+        Color::LightGreen,
+        Color::LightYellow,
+        Color::LightBlue,
+        Color::LightMagenta,
+        Color::LightCyan,
+    ];
+    let sum: u64 = route.bytes().fold(0u64, |acc, b| acc.wrapping_add(b as u64));
+    let idx = (sum as usize) % PALETTE.len();
+    PALETTE[idx]
 }
