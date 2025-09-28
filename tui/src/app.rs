@@ -71,6 +71,9 @@ pub struct App {
     pub metrics_scale: MetricsScale,
     pub live_metrics: models::LiveMetricsMap,
     pub last_metrics_refresh: std::time::Instant,
+    // Metrics UI selection
+    pub metrics_routes: Vec<String>,
+    pub metrics_route_index: usize,
 }
 
 impl App {
@@ -102,6 +105,8 @@ impl App {
             metrics_scale: MetricsScale::Minutes(5),
             live_metrics: HashMap::new(),
             last_metrics_refresh: std::time::Instant::now(),
+            metrics_routes: Vec::new(),
+            metrics_route_index: 0,
         }
     }
 

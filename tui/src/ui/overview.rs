@@ -40,7 +40,7 @@ fn draw_stats(f: &mut Frame, area: Rect, app: &App) {
 
 fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
     // Build datasets: one per endpoint with counts per minute bucket across the selected window
-    let mut datasets: Vec<Dataset> = Vec::new();
+    // Datasets will be created later for the selected route
     let mut max_x = 1.0f64;
     let mut max_y = 1.0f64;
     let minutes = app.metrics_scale.to_minutes().max(1);
@@ -79,29 +79,13 @@ fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
     // Sort for stable ordering across renders
     series_storage.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
 
-    // Generate unique colors per endpoint (route) for current set
-    use std::collections::HashMap as Map;
+    // Gather unique routes for selection/legend panel
     let mut unique_routes: Vec<String> = series_storage.iter().map(|(r, _, _)| r.clone()).collect();
     unique_routes.sort();
     unique_routes.dedup();
-    let palette = gen_palette(unique_routes.len());
-    let mut route_color: Map<String, Color> = Map::new();
-    for (idx, r) in unique_routes.iter().enumerate() {
-        route_color.insert(r.clone(), palette[idx]);
-    }
 
-    for (route, method, points) in &series_storage {
-        let color = route_color.get(route).cloned().unwrap_or(Color::White);
-        let ds = Dataset::default()
-            .name(format!("{} {}", method, route))
-            .marker(symbols::Marker::Braille)
-            .style(Style::default().fg(color))
-            .graph_type(GraphType::Line)
-            .data(points);
-        datasets.push(ds);
-    }
-
-    if datasets.is_empty() {
+    // Determine unique routes and selected route index
+    if series_storage.is_empty() {
         let p = Paragraph::new("No live metrics yet…")
             .block(Block::default().borders(Borders::ALL).title("Live API metrics"));
         f.render_widget(p, area);
@@ -114,12 +98,46 @@ fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
     if y_upper < 10 { y_upper = 10; }
     let y_labels: Vec<_> = (0..=y_upper).step_by(10).map(|n| n.to_string().into()).collect();
 
-    let chart = Chart::new(datasets)
+    // Split area into chart (left) and a larger legend panel (right/top-right)
+    let cols = Layout::default()
+        .direction(Direction::Horizontal)
+        // 80/20 split per request
+        .constraints([Constraint::Percentage(80), Constraint::Percentage(20)])
+        .split(area);
+
+    // If we have multiple routes, show only the selected route's datasets on the graph
+    let mut selected_route: Option<String> = None;
+    if !unique_routes.is_empty() {
+        let sel = app.metrics_route_index.min(unique_routes.len() - 1);
+        selected_route = Some(unique_routes[sel].clone());
+    }
+    // Build datasets only for the selected route; color by METHOD (GET: green, POST: blue)
+    let mut filtered: Vec<Dataset> = Vec::new();
+    if let Some(ref route) = selected_route {
+        for (r, method, points) in &series_storage {
+            if r == route {
+                let color = match method.as_str() {
+                    "GET" => Color::Green,
+                    "POST" => Color::Blue,
+                    _ => Color::White,
+                };
+                let ds = Dataset::default()
+                    .name(format!("{} {}", method, r))
+                    .marker(symbols::Marker::Braille)
+                    .style(Style::default().fg(color))
+                    .graph_type(GraphType::Line)
+                    .data(points);
+                filtered.push(ds);
+            }
+        }
+    }
+    let chart = Chart::new(filtered)
         .block(
             Block::bordered().title(
                 TuiLine::from(format!(
-                    "API requests (per {}) — endpoints",
-                    app.metrics_scale.label()
+                    "API requests (per {}) — {}",
+                    app.metrics_scale.label(),
+                    selected_route.clone().unwrap_or_else(|| "all routes".to_string())
                 ))
                 .cyan()
                 .bold()
@@ -140,24 +158,25 @@ fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
                 .bounds([0.0, y_upper as f64])
                 .labels(y_labels),
         );
-
-    // Split area into chart (left) and a larger legend panel (right/top-right)
-    let cols = Layout::default()
-        .direction(Direction::Horizontal)
-        // Reduce legend panel width by 75%: from 40% -> 10%
-        .constraints([Constraint::Percentage(90), Constraint::Percentage(10)])
-        .split(area);
-
     f.render_widget(chart, cols[0]);
 
-    // Build custom legend lines (colored bullet + route name)
+    // Build custom legend panel: method key + route list (no route colorcoding)
     let mut legend_lines: Vec<TuiLine> = Vec::new();
-    for (route, method, _points) in &series_storage {
-        let color = route_color.get(route).cloned().unwrap_or(Color::White);
-        legend_lines.push(TuiLine::from(vec![
-            Span::styled("● ", Style::default().fg(color)),
-            Span::raw(format!("{} {}", method, route)),
-        ]));
+    // Method key
+    legend_lines.push(TuiLine::from(vec![
+        Span::styled("● ", Style::default().fg(Color::Green)),
+        Span::raw("GET"),
+    ]));
+    legend_lines.push(TuiLine::from(vec![
+        Span::styled("● ", Style::default().fg(Color::Blue)),
+        Span::raw("POST"),
+    ]));
+    legend_lines.push(TuiLine::from(""));
+    // Right panel legend: show only routes, highlight the selected one
+    for route in &unique_routes {
+        let mut line = vec![Span::styled("• ", Style::default().fg(Color::Gray)), Span::raw(route.clone())];
+        if Some(route) == selected_route.as_ref() { for s in &mut line { *s = s.clone().bold(); } }
+        legend_lines.push(TuiLine::from(line));
     }
 
     let legend_par = Paragraph::new(legend_lines)
@@ -166,25 +185,5 @@ fn draw_live_metrics_chart(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(legend_par, cols[1]);
 }
 
-// Generate N visually distinct colors by sweeping hue; fixed saturation/lightness.
-fn gen_palette(n: usize) -> Vec<Color> {
-    if n == 0 { return Vec::new(); }
-    let mut v = Vec::with_capacity(n);
-    for i in 0..n {
-        let h = (i as f32) / (n as f32); // 0..1
-        let (r, g, b) = hsl_to_rgb(h, 0.65, 0.5);
-        v.push(Color::Rgb(r, g, b));
-    }
-    v
-}
-
-// Minimal HSL->RGB converter; h,s,l in 0..1
-fn hsl_to_rgb(h: f32, s: f32, l: f32) -> (u8, u8, u8) {
-    let a = s * f32::min(l, 1.0 - l);
-    fn f(n: f32, h: f32, l: f32, a: f32) -> u8 {
-        let k = (n + h * 12.0) % 12.0;
-        let color = l - a * f32::max(f32::min(f32::min(k - 3.0, 9.0 - k), 1.0), -1.0);
-        (color.clamp(0.0, 1.0) * 255.0).round() as u8
-    }
-    (f(0.0, h, l, a), f(8.0/12.0, h, l, a), f(4.0/12.0, h, l, a))
-}
+// Removed route-based color palette: legend now uses only method colors (GET/POST),
+// and datasets are colored by method as well.

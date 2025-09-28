@@ -109,6 +109,20 @@ async fn main() -> Result<()> {
                         }
                         KeyCode::Up | KeyCode::Char('k') => {
                             match app.current_tab() {
+                                Tab::Overview => {
+                                    if !app.live_metrics.is_empty() {
+                                        let mut routes: Vec<String> = app.live_metrics.keys().cloned().collect();
+                                        routes.sort();
+                                        if !routes.is_empty() {
+                                            if app.metrics_route_index > 0 {
+                                                app.metrics_route_index -= 1;
+                                            } else {
+                                                app.metrics_route_index = routes.len() - 1;
+                                            }
+                                            app.status = format!("Selected: {}", routes[app.metrics_route_index]);
+                                        }
+                                    }
+                                }
                                 Tab::Batches => {
                                     let len = app.batches.len();
                                     if len > 0 {
@@ -164,6 +178,16 @@ async fn main() -> Result<()> {
                         }
                         KeyCode::Down | KeyCode::Char('j') => {
                             match app.current_tab() {
+                                Tab::Overview => {
+                                    if !app.live_metrics.is_empty() {
+                                        let mut routes: Vec<String> = app.live_metrics.keys().cloned().collect();
+                                        routes.sort();
+                                        if !routes.is_empty() {
+                                            app.metrics_route_index = (app.metrics_route_index + 1) % routes.len();
+                                            app.status = format!("Selected: {}", routes[app.metrics_route_index]);
+                                        }
+                                    }
+                                }
                                 Tab::Batches => {
                                     let len = app.batches.len();
                                     if len > 0 {
@@ -671,6 +695,15 @@ async fn main() -> Result<()> {
                         let mins = app.metrics_scale.to_minutes();
                         if let Ok(map) = api.live_metrics(mins).await {
                             app.live_metrics = map;
+                            // update ordered routes cache and clamp selection index
+                            let mut routes: Vec<String> = app.live_metrics.keys().cloned().collect();
+                            routes.sort();
+                            app.metrics_routes = routes;
+                            if !app.metrics_routes.is_empty() {
+                                app.metrics_route_index = app.metrics_route_index.min(app.metrics_routes.len() - 1);
+                            } else {
+                                app.metrics_route_index = 0;
+                            }
                             app.last_metrics_refresh = now;
                         }
                     }
