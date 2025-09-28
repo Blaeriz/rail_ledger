@@ -1,6 +1,7 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{NaiveDate};
 use serde::Deserialize;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct Batch {
     pub batch_id: String,
@@ -51,6 +52,7 @@ pub struct User {
     pub user_role: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct Ticket {
     pub ticket_id: String,

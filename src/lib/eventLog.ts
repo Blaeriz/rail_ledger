@@ -6,8 +6,8 @@ export type ApiRoute = '/api/ai/summary' | '/api/batches' | '/api/users' | '/api
 
 interface ApiEvent {
   route: ApiRoute;
-  method: ApiMethod;
   status: ApiStatus;
+  method: ApiMethod;
   time: number;
 }
 
@@ -79,4 +79,11 @@ function cleanupOldEvents(maxMinutes: number) {
   while (apiEvents.length && apiEvents[0].time < cutoff) {
     apiEvents.shift();
   }
+}
+
+/**
+ * Optional: Get all events (for debugging or UI)
+ */
+export function getAllEvents(): ApiEvent[] {
+  return [...apiEvents];
 }

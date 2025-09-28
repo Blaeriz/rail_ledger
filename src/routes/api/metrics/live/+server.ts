@@ -1,3 +1,4 @@
+// src/routes/api/metrics/live/+server.ts
 import type { RequestHandler } from '@sveltejs/kit';
 import { getEventLog } from '$lib/eventLog';
 
