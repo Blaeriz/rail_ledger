@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -6,6 +6,7 @@ use std::collections::HashMap;
 pub struct Batch {
     pub batch_id: String,
     pub vendor_id: Option<String>,
+    #[allow(dead_code)]
     pub batch_size: Option<i32>,
     pub date_of_production: Option<NaiveDate>,
     pub qc_status: Option<String>,
@@ -56,6 +57,7 @@ pub struct User {
 pub struct Ticket {
     pub ticket_id: String,
     pub title: String,
+    #[allow(dead_code)]
     pub description: Option<String>,
     pub priority: Option<String>,
     pub status: Option<String>,
