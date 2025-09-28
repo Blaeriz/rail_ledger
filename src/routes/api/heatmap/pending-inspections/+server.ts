@@ -40,7 +40,7 @@ const STATE_TO_ID: Record<string, string> = {
 	'Uttarakhand': 'UT'
 };
 
-  const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async () => {
 	try {
 		const rows = await db
 			.select({
