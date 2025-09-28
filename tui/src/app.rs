@@ -69,7 +69,7 @@ pub struct App {
 
     // Live metrics
     pub metrics_scale: MetricsScale,
-    pub live_metrics: HashMap<String, models::LiveMetricsEntry>,
+    pub live_metrics: models::LiveMetricsMap,
     pub last_metrics_refresh: std::time::Instant,
 }
 

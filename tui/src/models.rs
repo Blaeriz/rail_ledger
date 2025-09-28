@@ -74,11 +74,10 @@ pub struct Ticket {
 }
 
 // Live API metrics
-// Response shape: { "/api/foo": { method: "GET"|"POST", timestamps: ["DDMMYYHHMM", ...] }, ... }
-#[derive(Debug, Clone, Deserialize)]
-pub struct LiveMetricsEntry {
-    pub method: String,
-    pub timestamps: Vec<String>,
-}
-
-pub type LiveMetricsMap = HashMap<String, LiveMetricsEntry>;
+// New response shape (per route, per method):
+// {
+//   "/api/foo": { "GET": ["DDMMYYHHMM", ...], "POST": [ ... ], ... },
+//   "/api/bar": { "GET": [ ... ] }
+// }
+// Represented as: route -> method -> timestamps
+pub type LiveMetricsMap = HashMap<String, HashMap<String, Vec<String>>>;
