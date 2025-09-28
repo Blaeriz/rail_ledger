@@ -1,27 +1,46 @@
 // src/lib/eventLog.ts
 
 export type ApiStatus = 'success' | 'error';
+export type ApiMethod = 'GET' | 'POST';
 export type ApiRoute = '/api/ai/summary' | '/api/batches' | '/api/users' | '/api/vendors';
 
 interface ApiEvent {
   route: ApiRoute;
+  method: ApiMethod;
   status: ApiStatus;
   time: number;
 }
 
-// Store all events temporarily
+// Temporary in-memory store
 const apiEvents: ApiEvent[] = [];
 
 /**
  * Logs an API event
+ * Backward-compatible:
+ * 1. logEvent(route, status) → defaults method to POST
+ * 2. logEvent(route, method, status)
  */
-export function logEvent(route: ApiRoute, status: ApiStatus) {
-  apiEvents.push({ route, status, time: Date.now() });
-  cleanupOldEvents(60); // remove events older than 60 minutes
+export function logEvent(route: ApiRoute, arg2: ApiMethod | ApiStatus, arg3?: ApiStatus) {
+  let method: ApiMethod;
+  let status: ApiStatus;
+
+  if (arg3 === undefined) {
+    method = 'POST';
+    status = arg2 as ApiStatus;
+  } else {
+    method = arg2 as ApiMethod;
+    status = arg3;
+  }
+
+  // Only track GET and POST
+  if (method === 'GET' || method === 'POST') {
+    apiEvents.push({ route, method, status, time: Date.now() });
+    cleanupOldEvents(60); // remove events older than 60 minutes
+  }
 }
 
 /**
- * Converts Date.now() timestamp to your custom format: DDMMYYHHMM
+ * Converts timestamp to DDMMYYHHMM
  */
 function formatTimestamp(ts: number) {
   const d = new Date(ts);
@@ -34,21 +53,26 @@ function formatTimestamp(ts: number) {
 }
 
 /**
- * Returns events grouped by route, method, and timestamps
+ * Returns events grouped by route and method
+ * Only GET and POST methods are included
  */
 export function getEventLog() {
-  const log: Record<string, { method: 'POST'; timestamps: string[] }> = {};
+  const log: Record<string, Record<ApiMethod, string[]>> = {};
+
+  const routes: ApiRoute[] = ['/api/ai/summary', '/api/batches', '/api/users', '/api/vendors'];
+  for (const route of routes) {
+    log[route] = { GET: [], POST: [] };
+  }
 
   for (const event of apiEvents) {
-    if (!log[event.route]) log[event.route] = { method: 'POST', timestamps: [] };
-    log[event.route].timestamps.push(formatTimestamp(event.time));
+    log[event.route][event.method].push(formatTimestamp(event.time));
   }
 
   return log;
 }
 
 /**
- * Remove events older than `maxMinutes`
+ * Removes events older than maxMinutes
  */
 function cleanupOldEvents(maxMinutes: number) {
   const cutoff = Date.now() - maxMinutes * 60_000;

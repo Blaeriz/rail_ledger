@@ -11,7 +11,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const extraContext = typeof body?.context === 'string' ? body.context : '';
 
 		if (!reports.length) {
-			logEvent('/api/ai/summary', 'error'); // ✅ log missing data
+			
 			return new Response(JSON.stringify({ error: 'No reports provided to summarize' }), {
 				status: 400
 			});
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const model = 'gemini-1.5-flash';
 
 		if (!apiKey) {
-			logEvent('/api/ai/summary', 'error'); // ✅ log config issue
+			
 			return new Response(
 				JSON.stringify({
 					error: 'Missing GEMINI_API_KEY (or OPENAI_API_KEY/GOOGLE_API_KEY) on server'
