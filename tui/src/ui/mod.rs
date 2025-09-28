@@ -5,6 +5,7 @@ pub mod overview;
 pub mod users;
 pub mod tickets;
 pub mod qr;
+pub mod system;
 
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Modifier, Style};
@@ -43,7 +44,8 @@ pub fn render(f: &mut Frame, app: &mut App) {
         Tab::Reports => reports::render(f, chunks[1], app),
         Tab::Users => users::render(f, chunks[1], app),
         Tab::Tickets => tickets::render(f, chunks[1], app),
-        Tab::QR => qr::render(f, chunks[1], app),
+    Tab::QR => qr::render(f, chunks[1], app),
+    Tab::System => system::render(f, chunks[1], app),
         other => draw_placeholder(f, chunks[1], other),
     }
 
