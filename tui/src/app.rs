@@ -1,6 +1,7 @@
 use ratatui::widgets::TableState;
 
 use crate::models;
+use std::collections::HashMap;
 
 pub const PAGE_SIZE: usize = 50;
 
@@ -65,6 +66,11 @@ pub struct App {
     pub qr_input_focused: bool,
     pub qr_result: Option<models::Batch>,
     pub qr_error: Option<String>,
+
+    // Live metrics
+    pub metrics_scale: MetricsScale,
+    pub live_metrics: HashMap<String, models::LiveMetricsEntry>,
+    pub last_metrics_refresh: std::time::Instant,
 }
 
 impl App {
@@ -93,10 +99,37 @@ impl App {
             qr_input_focused: true,
             qr_result: None,
             qr_error: None,
+            metrics_scale: MetricsScale::Minutes(5),
+            live_metrics: HashMap::new(),
+            last_metrics_refresh: std::time::Instant::now(),
         }
     }
 
     pub fn current_tab(&self) -> Tab {
         Tab::all()[self.tab_index]
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum MetricsScale {
+    Minutes(u32),
+    Hours(u32),
+    Days(u32),
+}
+
+impl MetricsScale {
+    pub fn to_minutes(self) -> u32 {
+        match self {
+            MetricsScale::Minutes(m) => m,
+            MetricsScale::Hours(h) => h.saturating_mul(60),
+            MetricsScale::Days(d) => d.saturating_mul(1440),
+        }
+    }
+    pub fn label(self) -> &'static str {
+        match self {
+            MetricsScale::Minutes(_) => "min",
+            MetricsScale::Hours(_) => "hour",
+            MetricsScale::Days(_) => "day",
+        }
     }
 }

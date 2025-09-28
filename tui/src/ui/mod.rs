@@ -48,7 +48,7 @@ pub fn render(f: &mut Frame, app: &mut App) {
     }
 
     // Status bar with mini legend
-    let legend = "Keys: q quit · Tab/Shift-Tab switch · ↑/↓ move · PgUp/PgDn jump · ←/→ page · Home/End first/last";
+    let legend = "Keys: q quit · Tab/Shift-Tab switch · ↑/↓ move · PgUp/PgDn jump · ←/→ page · Home/End first/last · M/H/D change metrics window";
     let status = Block::default()
         .borders(Borders::TOP)
         .title(format!("{}  ||  {}", legend, app.status));
