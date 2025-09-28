@@ -7,11 +7,11 @@ import { logEvent } from '$lib/eventLog';
 export const GET: RequestHandler = async () => {
 	try {
 		const result = await db.select().from(user_info);
-		logEvent('/api/users', 'success'); // ✅ Track successful fetch
+	
 		return new Response(JSON.stringify(result), { status: 200 });
 	} catch (err) {
 		console.error('Error fetching users:', err);
-		logEvent('/api/users', 'error'); // ✅ Track failure
+		
 		return new Response(JSON.stringify({ error: 'Failed to fetch users' }), { status: 500 });
 	}
 };
