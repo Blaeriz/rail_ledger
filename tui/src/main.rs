@@ -13,7 +13,7 @@ mod ui;
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 
-use app::{App, Tab, PAGE_SIZE};
+use app::{App, Tab, PAGE_SIZE, MetricsScale};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -49,6 +49,39 @@ async fn main() -> Result<()> {
                         KeyCode::Char('g') => {
                             // Placeholder for g+key navigation; future implementation
                             app.status = "g- navigation: not yet implemented".into();
+                        }
+                        KeyCode::Char('M') => {
+                            // minutes view toggle: cycle 5 -> 15 -> 60
+                            app.metrics_scale = match app.metrics_scale {
+                                MetricsScale::Minutes(5) => MetricsScale::Minutes(15),
+                                MetricsScale::Minutes(15) => MetricsScale::Minutes(60),
+                                MetricsScale::Minutes(_) => MetricsScale::Minutes(5),
+                                MetricsScale::Hours(h) => MetricsScale::Minutes(h.saturating_mul(60)),
+                                MetricsScale::Days(d) => MetricsScale::Minutes(d.saturating_mul(1440)),
+                            };
+                            app.status = format!("Metrics window: {} mins", app.metrics_scale.to_minutes());
+                        }
+                        KeyCode::Char('H') => {
+                            // hours view preset: 1h, 6h, 24h
+                            app.metrics_scale = match app.metrics_scale {
+                                MetricsScale::Hours(1) => MetricsScale::Hours(6),
+                                MetricsScale::Hours(6) => MetricsScale::Hours(24),
+                                MetricsScale::Hours(_) => MetricsScale::Hours(1),
+                                MetricsScale::Minutes(m) => MetricsScale::Hours((m + 59) / 60),
+                                MetricsScale::Days(d) => MetricsScale::Hours(d.saturating_mul(24)),
+                            };
+                            app.status = format!("Metrics window: {} mins", app.metrics_scale.to_minutes());
+                        }
+                        KeyCode::Char('D') => {
+                            // days view preset: 1d, 3d, 7d
+                            app.metrics_scale = match app.metrics_scale {
+                                MetricsScale::Days(1) => MetricsScale::Days(3),
+                                MetricsScale::Days(3) => MetricsScale::Days(7),
+                                MetricsScale::Days(_) => MetricsScale::Days(1),
+                                MetricsScale::Hours(h) => MetricsScale::Days((h + 23) / 24),
+                                MetricsScale::Minutes(m) => MetricsScale::Days((m + 1439) / 1440),
+                            };
+                            app.status = format!("Metrics window: {} mins", app.metrics_scale.to_minutes());
                         }
                         KeyCode::Char('i') => {
                             if matches!(app.current_tab(), Tab::QR) {
@@ -515,6 +548,7 @@ async fn main() -> Result<()> {
                     Err(e) => { app.status = format!("Error loading vendors: {}", e); }
                 }
             }
+            // Load reports for stats
             if app.reports.is_empty() {
                 match api.reports().await {
                     Ok(items) => {
@@ -523,6 +557,18 @@ async fn main() -> Result<()> {
                         app.status = format!("Loaded {} reports", app.reports.len());
                     }
                     Err(e) => { app.status = format!("Error loading reports: {}", e); }
+                }
+            }
+
+            // Initial metrics load
+            if app.live_metrics.is_empty() {
+                let mins = app.metrics_scale.to_minutes();
+                match api.live_metrics(mins).await {
+                    Ok(map) => {
+                        app.live_metrics = map;
+                        app.status = format!("Loaded live metrics ({} mins)", mins);
+                    }
+                    Err(e) => { app.status = format!("Error loading metrics: {}", e); }
                 }
             }
             if app.batches.is_empty() {
@@ -615,6 +661,17 @@ async fn main() -> Result<()> {
                         }
                         if app.batches.len() != prev_len {
                             app.status = format!("Refreshed batches: {} items", app.batches.len());
+                        }
+                    }
+                    app.last_refresh = now;
+                }
+                Tab::Overview => {
+                    // Refresh live metrics more frequently than other lists
+                    if now.duration_since(app.last_metrics_refresh) >= std::time::Duration::from_secs(5) {
+                        let mins = app.metrics_scale.to_minutes();
+                        if let Ok(map) = api.live_metrics(mins).await {
+                            app.live_metrics = map;
+                            app.last_metrics_refresh = now;
                         }
                     }
                     app.last_refresh = now;

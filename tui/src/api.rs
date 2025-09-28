@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::models::{Batch, Report, Vendor, User, Ticket};
+use crate::models::{Batch, Report, Vendor, User, Ticket, LiveMetricsMap};
 use anyhow::{Context, Result};
 use reqwest::Client;
 
@@ -93,5 +93,23 @@ impl Api {
         }
         let item: Batch = resp.json().await.context("parse /api/batches/qr_hash json")?;
         Ok(item)
+    }
+
+    pub async fn live_metrics(&self, minutes: u32) -> Result<LiveMetricsMap> {
+        let url = format!("{}/api/metrics/live", self.cfg.base_url);
+        let resp = self
+            .client
+            .get(url)
+            .query(&[("minutes", minutes.to_string())])
+            .send()
+            .await
+            .context("GET /api/metrics/live")?;
+        if !resp.status().is_success() {
+            let code = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            anyhow::bail!("/api/metrics/live error {}: {}", code, body);
+        }
+        let map: LiveMetricsMap = resp.json().await.context("parse /api/metrics/live json")?;
+        Ok(map)
     }
 }

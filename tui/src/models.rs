@@ -1,5 +1,6 @@
 use chrono::{NaiveDate};
 use serde::Deserialize;
+use std::collections::HashMap;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
@@ -69,3 +70,13 @@ pub struct Ticket {
     pub resolution_notes: Option<String>,
     pub attachments: Option<Vec<String>>,
 }
+
+// Live API metrics
+// Response shape: { "/api/foo": { method: "GET"|"POST", timestamps: ["DDMMYYHHMM", ...] }, ... }
+#[derive(Debug, Clone, Deserialize)]
+pub struct LiveMetricsEntry {
+    pub method: String,
+    pub timestamps: Vec<String>,
+}
+
+pub type LiveMetricsMap = HashMap<String, LiveMetricsEntry>;
