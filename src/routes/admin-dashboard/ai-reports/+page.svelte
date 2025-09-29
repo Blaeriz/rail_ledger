@@ -312,8 +312,6 @@
                   <Chart 
                     data={visualization.data} 
                     type={visualization.type}
-                    title={visualization.title}
-                    description={visualization.description}
                   />
                 {/each}
               </div>

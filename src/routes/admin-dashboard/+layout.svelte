@@ -18,8 +18,7 @@
 		{ id: 'batches', label: 'Batches', href: '/admin-dashboard/batches', icon: 'package' },
 		{ id: 'users', label: 'Users', href: '/admin-dashboard/users', icon: 'users' },
 		{ id: 'reports', label: 'Reports', href: '/admin-dashboard/reports', icon: 'clipboard' },
-		{ id: 'tickets', label: 'Tickets', href: '/admin-dashboard/tickets', icon: 'ticket' },
-		{ id: 'ai_overview', label: 'AI Overview', href: '/admin-dashboard/ai_overview', icon: 'robot' }
+		{ id: 'tickets', label: 'Tickets', href: '/admin-dashboard/tickets', icon: 'ticket' }
 	];
 
 	function handleScroll() {
