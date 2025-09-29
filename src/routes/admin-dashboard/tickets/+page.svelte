@@ -192,7 +192,7 @@
 			searchable={true}
 			searchPlaceholder="Search tickets..."
 			showPagination={true}
-			pageSize={10}
+			pageSize={20}
 		/>
 	</div>
 </div>

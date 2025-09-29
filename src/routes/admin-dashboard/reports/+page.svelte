@@ -154,6 +154,8 @@
 		columns={tableColumns}
 		searchable={true}
 		searchPlaceholder="Search reports..."
+		showPagination={true}
+		pageSize={20}
 	/>
 </div>
 

@@ -153,6 +153,8 @@
 		columns={tableColumns}
 		searchable={true}
 		searchPlaceholder="Search batches..."
+		showPagination={true}
+		pageSize={20}
 	/>
 </div>
 

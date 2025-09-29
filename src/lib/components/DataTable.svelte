@@ -7,7 +7,7 @@
 	export let searchable = false;
 	export let searchPlaceholder = 'Search...';
 	export let showPagination = false;
-	export let pageSize = 10;
+	export let pageSize = 20;
 
 	let searchTerm = '';
 	let currentPage = 1;

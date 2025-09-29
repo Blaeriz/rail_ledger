@@ -145,6 +145,8 @@
 		columns={tableColumns}
 		searchable={true}
 		searchPlaceholder="Search users..."
+		showPagination={true}
+		pageSize={20}
 	/>
 </div>
 

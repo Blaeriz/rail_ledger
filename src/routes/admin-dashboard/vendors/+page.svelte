@@ -164,6 +164,8 @@
 		columns={tableColumns}
 		searchable={true}
 		searchPlaceholder="Search vendors..."
+		showPagination={true}
+		pageSize={20}
 	/>
 </div>
 
