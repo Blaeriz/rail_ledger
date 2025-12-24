@@ -42,7 +42,7 @@ const STATE_TO_ID: Record<string, string> = {
 
 export const GET: RequestHandler = async () => {
 	try {
-		const rows = await db
+		const whrows = await db
 			.select({
 				state: vendor_info.state,
 				count: sql<number>`COUNT(*)`
